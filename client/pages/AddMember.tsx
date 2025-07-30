@@ -150,7 +150,7 @@ export default function AddMember() {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const handleCreateUser = (e) => {
+  const handleCreateUser = async (e) => {
     e.preventDefault();
     if (
       !newUser.username.trim() ||
@@ -159,29 +159,41 @@ export default function AddMember() {
     )
       return;
 
-    const user = {
-      id: Date.now().toString(),
-      username: newUser.username,
-      email: newUser.email,
-      firstName: newUser.firstName,
-      lastName: newUser.lastName,
-      role: newUser.role,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      lastLogin: null,
-    };
+    try {
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          username: newUser.username,
+          email: newUser.email,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          role: newUser.role,
+          password: newUser.password,
+        }),
+      });
 
-    setUsers((prev) => [user, ...prev]);
-    setNewUser({
-      username: "",
-      email: "",
-      firstName: "",
-      lastName: "",
-      role: "member",
-      password: "",
-      confirmPassword: "",
-    });
-    setIsCreateDialogOpen(false);
+      const data = await response.json();
+
+      if (data.success) {
+        await fetchUsers(); // Refresh the user list
+        setNewUser({
+          username: "",
+          email: "",
+          firstName: "",
+          lastName: "",
+          role: "member",
+          password: "",
+          confirmPassword: "",
+        });
+        setIsCreateDialogOpen(false);
+      } else {
+        alert(data.message || "Failed to create user");
+      }
+    } catch (error) {
+      console.error("Create user error:", error);
+      alert("Failed to create user");
+    }
   };
 
   const handleEditUser = (e) => {
