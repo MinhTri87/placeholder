@@ -64,69 +64,39 @@ export default function AddMember() {
   const [editingUser, setEditingUser] = useState(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
-  // Mock user data
-  const mockUsers = [
-    {
-      id: "1",
-      username: "admin",
-      email: "admin@groupmanager.com",
-      firstName: "Admin",
-      lastName: "User",
-      role: "manager",
-      isActive: true,
-      createdAt: "2024-01-01T00:00:00Z",
-      lastLogin: "2024-01-30T10:30:00Z",
-    },
-    {
-      id: "2",
-      username: "jane.smith",
-      email: "jane.smith@groupmanager.com",
-      firstName: "Jane",
-      lastName: "Smith",
-      role: "member",
-      isActive: true,
-      createdAt: "2024-01-05T00:00:00Z",
-      lastLogin: "2024-01-30T09:15:00Z",
-    },
-    {
-      id: "3",
-      username: "bob.wilson",
-      email: "bob.wilson@groupmanager.com",
-      firstName: "Bob",
-      lastName: "Wilson",
-      role: "member",
-      isActive: true,
-      createdAt: "2024-01-10T00:00:00Z",
-      lastLogin: "2024-01-29T16:45:00Z",
-    },
-    {
-      id: "4",
-      username: "sarah.johnson",
-      email: "sarah.johnson@groupmanager.com",
-      firstName: "Sarah",
-      lastName: "Johnson",
-      role: "member",
-      isActive: false,
-      createdAt: "2024-01-15T00:00:00Z",
-      lastLogin: "2024-01-25T14:20:00Z",
-    },
-    {
-      id: "5",
-      username: "mike.davis",
-      email: "mike.davis@groupmanager.com",
-      firstName: "Mike",
-      lastName: "Davis",
-      role: "member",
-      isActive: true,
-      createdAt: "2024-01-20T00:00:00Z",
-      lastLogin: "2024-01-30T11:00:00Z",
-    },
-  ];
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("auth_token");
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setIsLoadingUsers(true);
+      const response = await fetch("/api/users", {
+        headers: getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUsers(data.data);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
-      setUsers(mockUsers);
+      fetchUsers();
     }
   }, [isAuthenticated]);
 
