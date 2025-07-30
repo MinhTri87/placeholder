@@ -196,15 +196,36 @@ export default function AddMember() {
     }
   };
 
-  const handleEditUser = (e) => {
+  const handleEditUser = async (e) => {
     e.preventDefault();
     if (!editingUser) return;
 
-    setUsers((prev) =>
-      prev.map((u) => (u.id === editingUser.id ? { ...u, ...editingUser } : u)),
-    );
-    setEditingUser(null);
-    setIsEditDialogOpen(false);
+    try {
+      const response = await fetch(`/api/users/${editingUser.id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          firstName: editingUser.firstName,
+          lastName: editingUser.lastName,
+          email: editingUser.email,
+          role: editingUser.role,
+          isActive: editingUser.isActive,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        await fetchUsers(); // Refresh the user list
+        setEditingUser(null);
+        setIsEditDialogOpen(false);
+      } else {
+        alert(data.message || "Failed to update user");
+      }
+    } catch (error) {
+      console.error("Update user error:", error);
+      alert("Failed to update user");
+    }
   };
 
   const handleToggleStatus = (userId, isActive) => {
