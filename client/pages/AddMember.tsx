@@ -228,10 +228,25 @@ export default function AddMember() {
     }
   };
 
-  const handleToggleStatus = (userId, isActive) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, isActive } : u)),
-    );
+  const handleToggleStatus = async (userId, isActive) => {
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ isActive }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        await fetchUsers(); // Refresh the user list
+      } else {
+        alert(data.message || "Failed to update user status");
+      }
+    } catch (error) {
+      console.error("Toggle status error:", error);
+      alert("Failed to update user status");
+    }
   };
 
   const handleDeleteUser = (userId) => {
