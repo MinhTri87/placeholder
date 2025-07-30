@@ -44,6 +44,12 @@ function createServer() {
   app.get("/api/activity/recent", handleGetRecentActivity);
   app.get("/api/activity/full", handleGetFullActivity);
 
+  // User management routes
+  app.get("/api/users", handleGetUsers);
+  app.post("/api/users", handleCreateUser);
+  app.put("/api/users/:id", handleUpdateUser);
+  app.delete("/api/users/:id", handleDeleteUser);
+
   return app;
 }
 
