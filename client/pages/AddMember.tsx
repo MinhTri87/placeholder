@@ -249,9 +249,25 @@ export default function AddMember() {
     }
   };
 
-  const handleDeleteUser = (userId) => {
-    if (confirm("Bạn có chắc chắn muốn xóa người d��ng này?")) {
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
+  const handleDeleteUser = async (userId) => {
+    if (confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
+      try {
+        const response = await fetch(`/api/users/${userId}`, {
+          method: "DELETE",
+          headers: getAuthHeaders(),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          await fetchUsers(); // Refresh the user list
+        } else {
+          alert(data.message || "Failed to delete user");
+        }
+      } catch (error) {
+        console.error("Delete user error:", error);
+        alert("Failed to delete user");
+      }
     }
   };
 
@@ -279,7 +295,7 @@ export default function AddMember() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Quản lý người dùng
+              Quản lý ng��ời dùng
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               Quản lý thành viên nhóm và cấp độ truy cập của họ
