@@ -8,6 +8,12 @@ const {
   handleGetRecentActivity,
   handleGetFullActivity,
 } = require("./routes/stats");
+const {
+  handleGetUsers,
+  handleCreateUser,
+  handleUpdateUser,
+  handleDeleteUser,
+} = require("./routes/users");
 const { initializeDatabase } = require("./db/config");
 
 function createServer() {
