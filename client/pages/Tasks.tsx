@@ -61,22 +61,8 @@ export default function Tasks() {
     dueDate: "",
   });
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-
-  // Mock data
-  const mockProjects = [
-    { id: "1", name: "Website Redesign" },
-    { id: "2", name: "Mobile App Development" },
-    { id: "3", name: "Database Migration" },
-    { id: "4", name: "Security Audit" },
-  ];
-
-  const mockUsers = [
-    { id: "1", name: "Admin User", role: "manager" },
-    { id: "2", name: "Jane Smith", role: "member" },
-    { id: "3", name: "Bob Wilson", role: "member" },
-    { id: "4", name: "Sarah Johnson", role: "member" },
-    { id: "5", name: "Mike Davis", role: "member" },
-  ];
+  const [projects, setProjects] = useState([]);
+  const [users, setUsers] = useState([]);
 
   const mockTasks = [
     {
@@ -168,6 +154,8 @@ export default function Tasks() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchTasks();
+      fetchProjects();
+      fetchUsers();
     }
   }, [isAuthenticated]);
 
@@ -188,8 +176,46 @@ export default function Tasks() {
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      // Fallback to mock data
-      setTasks(mockTasks);
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/projects', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setProjects(data.data);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setUsers(data.data);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
     }
   };
 
@@ -448,7 +474,7 @@ export default function Tasks() {
                           <SelectValue placeholder="Select project" />
                         </SelectTrigger>
                         <SelectContent>
-                          {mockProjects.map((project) => (
+                          {projects.map((project) => (
                             <SelectItem key={project.id} value={project.id}>
                               {project.name}
                             </SelectItem>
@@ -619,9 +645,9 @@ export default function Tasks() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Assignees</SelectItem>
-                      {mockUsers.map((user) => (
+                      {users.map((user) => (
                         <SelectItem key={user.id} value={user.id}>
-                          {user.name}
+                          {user.firstName} {user.lastName}
                         </SelectItem>
                       ))}
                     </SelectContent>
