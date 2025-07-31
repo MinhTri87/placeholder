@@ -66,37 +66,6 @@ export default function AddMember() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
-<<<<<<< HEAD
-=======
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("auth_token");
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
-  };
-
-  const fetchUsers = async () => {
-    try {
-      setIsLoadingUsers(true);
-      const response = await fetch("/api/users", {
-        headers: getAuthHeaders(),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setUsers(data.data);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-    } finally {
-      setIsLoadingUsers(false);
-    }
-  };
-
->>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
   useEffect(() => {
     if (isAuthenticated) {
       fetchUsers();
@@ -187,7 +156,6 @@ console.log("Raw /api/users response:", data);
       return;
 
     try {
-<<<<<<< HEAD
       const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -195,11 +163,6 @@ console.log("Raw /api/users response:", data);
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-=======
-      const response = await fetch("/api/users", {
-        method: "POST",
-        headers: getAuthHeaders(),
->>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
         body: JSON.stringify({
           username: newUser.username,
           email: newUser.email,
@@ -212,14 +175,9 @@ console.log("Raw /api/users response:", data);
 
       const data = await response.json();
 
-<<<<<<< HEAD
       if (response.ok && data.success) {
         // Optionally, fetch users again or add the new user to the list
         fetchUsers();
-=======
-      if (data.success) {
-        await fetchUsers(); // Refresh the user list
->>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
         setNewUser({
           username: "",
           email: "",
@@ -231,19 +189,11 @@ console.log("Raw /api/users response:", data);
         });
         setIsCreateDialogOpen(false);
       } else {
-<<<<<<< HEAD
         alert(data.message || "Failed to create user.");
       }
     } catch (error) {
       alert("Error creating user.");
       console.error(error);
-=======
-        alert(data.message || "Failed to create user");
-      }
-    } catch (error) {
-      console.error("Create user error:", error);
-      alert("Failed to create user");
->>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
     }
   };
 
@@ -300,31 +250,9 @@ console.log("Raw /api/users response:", data);
     }
   };
 
-<<<<<<< HEAD
   const handleDeleteUser = (userId) => {
     if (confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
       setUsers((prev) => prev.filter((u) => u.id !== userId));
-=======
-  const handleDeleteUser = async (userId) => {
-    if (confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
-      try {
-        const response = await fetch(`/api/users/${userId}`, {
-          method: "DELETE",
-          headers: getAuthHeaders(),
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          await fetchUsers(); // Refresh the user list
-        } else {
-          alert(data.message || "Failed to delete user");
-        }
-      } catch (error) {
-        console.error("Delete user error:", error);
-        alert("Failed to delete user");
-      }
->>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
     }
   };
 

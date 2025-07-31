@@ -76,12 +76,8 @@ export default function Projects() {
         setProjects([]);
       }
     } catch (error) {
-<<<<<<< HEAD
       console.error('Error fetching projects:', error);
       setProjects([]);
-=======
-      console.error("Error fetching projects:", error);
->>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
     }
   };
 
@@ -152,17 +148,9 @@ export default function Projects() {
         body: JSON.stringify({
           name: newProject.name,
           description: newProject.description,
-<<<<<<< HEAD
           dueDate: newProject.dueDate ? new Date(newProject.dueDate).toISOString() : null,
           createdBy: user.id
         })
-=======
-          dueDate: newProject.dueDate
-            ? new Date(newProject.dueDate).toISOString()
-            : null,
-          memberIds: [user.id],
-        }),
->>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
       });
 
       if (response.ok) {
