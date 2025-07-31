@@ -133,48 +133,7 @@ export default function ActivityPage() {
     { name: "Admin User", tasksCompleted: 8, projectsLed: 4, hoursWorked: 40 },
   ];
 
-  const recentActivities = [
-    {
-      id: "1",
-      user: "Jane Smith",
-      action: "Completed task",
-      details: "Design new homepage layout",
-      timestamp: "2 minutes ago",
-      type: "task",
-    },
-    {
-      id: "2",
-      user: "Bob Wilson",
-      action: "Started project",
-      details: "Security Audit Phase 2",
-      timestamp: "15 minutes ago",
-      type: "project",
-    },
-    {
-      id: "3",
-      user: "Sarah Johnson",
-      action: "User login",
-      details: "Logged in from 192.168.1.50",
-      timestamp: "32 minutes ago",
-      type: "login",
-    },
-    {
-      id: "4",
-      user: "Mike Davis",
-      action: "Updated task",
-      details: "Mobile UI components - changed priority to high",
-      timestamp: "1 hour ago",
-      type: "task",
-    },
-    {
-      id: "5",
-      user: "Admin User",
-      action: "Created user",
-      details: "Added new team member: Alex Chen",
-      timestamp: "2 hours ago",
-      type: "user",
-    },
-  ];
+
 
   if (isLoading) {
     return (
