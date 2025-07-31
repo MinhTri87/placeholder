@@ -160,8 +160,6 @@ export default function Projects() {
       }
     } catch (error) {
       console.error('Error fetching projects:', error);
-      // Fallback to mock data
-      setProjects(mockProjects);
     }
   };
 
