@@ -64,13 +64,13 @@ export default function ActivityPage() {
 
   const fetchActivityData = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem("auth_token");
       const headers = {
-        'Authorization': `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       };
 
       // Fetch recent activity
-      const recentResponse = await fetch('/api/activity/recent', { headers });
+      const recentResponse = await fetch("/api/activity/recent", { headers });
       if (recentResponse.ok) {
         const recentData = await recentResponse.json();
         if (recentData.success && recentData.data) {
@@ -79,7 +79,7 @@ export default function ActivityPage() {
       }
 
       // Fetch full activity
-      const fullResponse = await fetch('/api/activity/full', { headers });
+      const fullResponse = await fetch("/api/activity/full", { headers });
       if (fullResponse.ok) {
         const fullData = await fullResponse.json();
         if (fullData.success && fullData.data) {
@@ -87,7 +87,7 @@ export default function ActivityPage() {
         }
       }
     } catch (error) {
-      console.error('Error fetching activity:', error);
+      console.error("Error fetching activity:", error);
     } finally {
       setLoadingActivity(false);
     }
@@ -132,8 +132,6 @@ export default function ActivityPage() {
     { name: "Mike Davis", tasksCompleted: 10, projectsLed: 1, hoursWorked: 35 },
     { name: "Admin User", tasksCompleted: 8, projectsLed: 4, hoursWorked: 40 },
   ];
-
-
 
   if (isLoading) {
     return (

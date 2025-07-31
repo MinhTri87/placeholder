@@ -64,8 +64,6 @@ export default function Tasks() {
   const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
 
-
-
   useEffect(() => {
     if (isAuthenticated) {
       fetchTasks();
@@ -76,11 +74,11 @@ export default function Tasks() {
 
   const fetchTasks = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/tasks', {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/tasks", {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
@@ -90,17 +88,17 @@ export default function Tasks() {
         }
       }
     } catch (error) {
-      console.error('Error fetching tasks:', error);
+      console.error("Error fetching tasks:", error);
     }
   };
 
   const fetchProjects = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/projects', {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/projects", {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
@@ -110,17 +108,17 @@ export default function Tasks() {
         }
       }
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      console.error("Error fetching projects:", error);
     }
   };
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/users', {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/users", {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
@@ -130,7 +128,7 @@ export default function Tasks() {
         }
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("Error fetching users:", error);
     }
   };
 
@@ -209,12 +207,12 @@ export default function Tasks() {
     if (!newTask.title.trim()) return;
 
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/tasks", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           title: newTask.title,
@@ -222,8 +220,10 @@ export default function Tasks() {
           priority: newTask.priority,
           projectId: newTask.projectId || null,
           assignedTo: newTask.assignedTo || null,
-          dueDate: newTask.dueDate ? new Date(newTask.dueDate).toISOString() : null
-        })
+          dueDate: newTask.dueDate
+            ? new Date(newTask.dueDate).toISOString()
+            : null,
+        }),
       });
 
       if (response.ok) {
@@ -233,7 +233,7 @@ export default function Tasks() {
         }
       }
     } catch (error) {
-      console.error('Error creating task:', error);
+      console.error("Error creating task:", error);
     }
 
     setNewTask({
@@ -249,14 +249,14 @@ export default function Tasks() {
 
   const handleStatusChange = async (taskId, newStatus) => {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem("auth_token");
       const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: newStatus }),
       });
 
       if (response.ok) {
@@ -266,7 +266,7 @@ export default function Tasks() {
         }
       }
     } catch (error) {
-      console.error('Error updating task status:', error);
+      console.error("Error updating task status:", error);
     }
   };
 

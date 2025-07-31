@@ -50,8 +50,6 @@ export default function Projects() {
   });
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-
-
   useEffect(() => {
     if (isAuthenticated) {
       fetchProjects();
@@ -60,11 +58,11 @@ export default function Projects() {
 
   const fetchProjects = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/projects', {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/projects", {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
@@ -74,7 +72,7 @@ export default function Projects() {
         }
       }
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      console.error("Error fetching projects:", error);
     }
   };
 
@@ -135,29 +133,31 @@ export default function Projects() {
     if (!newProject.name.trim()) return;
 
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/projects', {
-        method: 'POST',
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/projects", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: newProject.name,
           description: newProject.description,
-          dueDate: newProject.dueDate ? new Date(newProject.dueDate).toISOString() : null,
-          memberIds: [user.id]
-        })
+          dueDate: newProject.dueDate
+            ? new Date(newProject.dueDate).toISOString()
+            : null,
+          memberIds: [user.id],
+        }),
       });
 
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.data) {
-          setProjects(prev => [data.data, ...prev]);
+          setProjects((prev) => [data.data, ...prev]);
         }
       }
     } catch (error) {
-      console.error('Error creating project:', error);
+      console.error("Error creating project:", error);
     }
 
     setNewProject({ name: "", description: "", dueDate: "" });
