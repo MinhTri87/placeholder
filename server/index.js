@@ -2,6 +2,7 @@ require("dotenv/config");
 const express = require("express");
 const cors = require("cors");
 const { handleDemo } = require("./routes/demo");
+<<<<<<< HEAD
 const { handleLogin, handleAuthCheck } = require("./routes/auth");
 const {
   handleGetStats,
@@ -15,12 +16,21 @@ const {
   handleDeleteUser,
 } = require("./routes/users");
 const { initializeDatabase } = require("./db/config");
+=======
+const { handleLogin, handleRegister, handleAuthCheck, authenticateToken } = require("./routes/auth");
+const { handleGetStats, handleGetRecentActivity, handleGetFullActivity } = require("./routes/stats");
+const { handleGetProjects, handleCreateProject, handleUpdateProject } = require("./routes/projects");
+const { handleGetTasks, handleCreateTask, handleUpdateTask } = require("./routes/tasks");
+const { handleGetUsers, handleCreateUser, handleUpdateUser, handleDeleteUser } = require("./routes/users");
+const { handleGetMessages, handleSendMessage, handleGetPrivateMessages, handleSendPrivateMessage, handleGetUserList, handleGetUnreadCount } = require("./routes/chat");
+const { connectToDatabase } = require("./db/connection");
+>>>>>>> origin/main
 
 function createServer() {
   const app = express();
 
   // Initialize database connection
-  initializeDatabase().catch(console.error);
+  connectToDatabase().catch(console.error);
 
   // Middleware
   app.use(cors());
@@ -37,6 +47,7 @@ function createServer() {
 
   // Authentication routes
   app.post("/api/auth/login", handleLogin);
+  app.post("/api/auth/register", handleRegister);
   app.get("/api/auth/check", handleAuthCheck);
 
   // Stats and activity routes
@@ -44,12 +55,36 @@ function createServer() {
   app.get("/api/activity/recent", handleGetRecentActivity);
   app.get("/api/activity/full", handleGetFullActivity);
 
+<<<<<<< HEAD
+=======
+  // Project routes
+  app.get("/api/projects", handleGetProjects);
+  app.post("/api/projects", handleCreateProject);
+  app.put("/api/projects/:id", handleUpdateProject);
+
+  // Task routes
+  app.get("/api/tasks", handleGetTasks);
+  app.post("/api/tasks", handleCreateTask);
+  app.put("/api/tasks/:id", handleUpdateTask);
+
+>>>>>>> origin/main
   // User management routes
   app.get("/api/users", handleGetUsers);
   app.post("/api/users", handleCreateUser);
   app.put("/api/users/:id", handleUpdateUser);
   app.delete("/api/users/:id", handleDeleteUser);
 
+<<<<<<< HEAD
+=======
+  // Chat routes
+  app.get("/api/chat/messages", handleGetMessages);
+  app.post("/api/chat/messages", handleSendMessage);
+  app.get("/api/chat/private/:userId", handleGetPrivateMessages);
+  app.post("/api/chat/private/:userId", handleSendPrivateMessage);
+  app.get("/api/chat/users", handleGetUserList);
+  app.get("/api/chat/unread", handleGetUnreadCount);
+
+>>>>>>> origin/main
   return app;
 }
 
