@@ -75,11 +75,11 @@ export default function Tasks() {
 
   const fetchTasks = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/tasks', {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/tasks", {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
@@ -93,13 +93,18 @@ export default function Tasks() {
         setTasks([]);
       }
     } catch (error) {
+<<<<<<< HEAD
       console.error('Error fetching tasks:', error);
       setTasks([]);
+=======
+      console.error("Error fetching tasks:", error);
+>>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
     }
   };
 
   const fetchProjects = async () => {
     try {
+<<<<<<< HEAD
       const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/projects', {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -110,11 +115,29 @@ export default function Tasks() {
       }
     } catch (error) {
       setProjects([]);
+=======
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/projects", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setProjects(data.data);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+>>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
     }
   };
 
   const fetchUsers = async () => {
     try {
+<<<<<<< HEAD
       const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/users', {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -125,6 +148,23 @@ export default function Tasks() {
       }
     } catch (error) {
       setUsers([]);
+=======
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/users", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setUsers(data.data);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+>>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
     }
   };
 
@@ -202,6 +242,7 @@ export default function Tasks() {
     e.preventDefault();
     if (!newTask.title.trim()) return;
 
+<<<<<<< HEAD
     // Convert projectId to number
     const projectId = newTask.projectId;
     console.log("Creating task with payload:", {
@@ -227,17 +268,44 @@ export default function Tasks() {
           assignedTo: newTask.assignedTo,
           createdBy: user.id,
           dueDate: newTask.dueDate ? new Date(newTask.dueDate).toISOString() : null,
+=======
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: newTask.title,
+          description: newTask.description,
+          priority: newTask.priority,
+          projectId: newTask.projectId || null,
+          assignedTo: newTask.assignedTo || null,
+          dueDate: newTask.dueDate
+            ? new Date(newTask.dueDate).toISOString()
+            : null,
+>>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.data) {
+<<<<<<< HEAD
           setTasks((prev) => [data.data, ...prev]);
         }
       }
     } catch (error) {
       console.error('Error creating task:', error);
+=======
+          await fetchTasks(); // Refresh the task list
+        }
+      }
+    } catch (error) {
+      console.error("Error creating task:", error);
+>>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
     }
 
     setNewTask({
@@ -251,12 +319,27 @@ export default function Tasks() {
     setIsCreateDialogOpen(false);
   };
 
-  const handleStatusChange = (taskId, newStatus) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId ? { ...task, status: newStatus } : task,
-      ),
-    );
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          await fetchTasks(); // Refresh the task list
+        }
+      }
+    } catch (error) {
+      console.error("Error updating task status:", error);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -381,7 +464,11 @@ export default function Tasks() {
                         </SelectTrigger>
                         <SelectContent>
                           {projects.map((project) => (
+<<<<<<< HEAD
                             <SelectItem key={project.id} value={String(project.id)}>
+=======
+                            <SelectItem key={project.id} value={project.id}>
+>>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
                               {project.name}
                             </SelectItem>
                           ))}
@@ -403,10 +490,16 @@ export default function Tasks() {
                         </SelectTrigger>
                         <SelectContent>
                           {users.map((user) => (
+<<<<<<< HEAD
                             <SelectItem key={user.id} value={String(user.id)}>
   {user.firstName} {user.lastName}
 </SelectItem>
 
+=======
+                            <SelectItem key={user.id} value={user.id}>
+                              {user.firstName} {user.lastName} ({user.role})
+                            </SelectItem>
+>>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
                           ))}
                         </SelectContent>
                       </Select>
@@ -556,7 +649,7 @@ export default function Tasks() {
                       <SelectItem value="all">All Assignees</SelectItem>
                       {users.map((user) => (
                         <SelectItem key={user.id} value={user.id}>
-                          {user.name}
+                          {user.firstName} {user.lastName}
                         </SelectItem>
                       ))}
                     </SelectContent>

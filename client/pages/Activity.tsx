@@ -52,6 +52,46 @@ export default function ActivityPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [timeRange, setTimeRange] = useState("7days");
   const [activityType, setActivityType] = useState("all");
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [fullActivity, setFullActivity] = useState([]);
+  const [loadingActivity, setLoadingActivity] = useState(true);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchActivityData();
+    }
+  }, [isAuthenticated]);
+
+  const fetchActivityData = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      // Fetch recent activity
+      const recentResponse = await fetch("/api/activity/recent", { headers });
+      if (recentResponse.ok) {
+        const recentData = await recentResponse.json();
+        if (recentData.success && recentData.data) {
+          setRecentActivities(recentData.data);
+        }
+      }
+
+      // Fetch full activity
+      const fullResponse = await fetch("/api/activity/full", { headers });
+      if (fullResponse.ok) {
+        const fullData = await fullResponse.json();
+        if (fullData.success && fullData.data) {
+          setFullActivity(fullData.data);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching activity:", error);
+    } finally {
+      setLoadingActivity(false);
+    }
+  };
 
   // Mock data for charts
   const weeklyActivity = [
@@ -91,49 +131,6 @@ export default function ActivityPage() {
     },
     { name: "Mike Davis", tasksCompleted: 10, projectsLed: 1, hoursWorked: 35 },
     { name: "Admin User", tasksCompleted: 8, projectsLed: 4, hoursWorked: 40 },
-  ];
-
-  const recentActivities = [
-    {
-      id: "1",
-      user: "Jane Smith",
-      action: "Completed task",
-      details: "Design new homepage layout",
-      timestamp: "2 minutes ago",
-      type: "task",
-    },
-    {
-      id: "2",
-      user: "Bob Wilson",
-      action: "Started project",
-      details: "Security Audit Phase 2",
-      timestamp: "15 minutes ago",
-      type: "project",
-    },
-    {
-      id: "3",
-      user: "Sarah Johnson",
-      action: "User login",
-      details: "Logged in from 192.168.1.50",
-      timestamp: "32 minutes ago",
-      type: "login",
-    },
-    {
-      id: "4",
-      user: "Mike Davis",
-      action: "Updated task",
-      details: "Mobile UI components - changed priority to high",
-      timestamp: "1 hour ago",
-      type: "task",
-    },
-    {
-      id: "5",
-      user: "Admin User",
-      action: "Created user",
-      details: "Added new team member: Alex Chen",
-      timestamp: "2 hours ago",
-      type: "user",
-    },
   ];
 
   if (isLoading) {

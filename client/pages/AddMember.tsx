@@ -64,7 +64,39 @@ export default function AddMember() {
   const [editingUser, setEditingUser] = useState(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
+<<<<<<< HEAD
+=======
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("auth_token");
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setIsLoadingUsers(true);
+      const response = await fetch("/api/users", {
+        headers: getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUsers(data.data);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+>>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
   useEffect(() => {
     if (isAuthenticated) {
       fetchUsers();
@@ -155,6 +187,7 @@ console.log("Raw /api/users response:", data);
       return;
 
     try {
+<<<<<<< HEAD
       const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -162,6 +195,11 @@ console.log("Raw /api/users response:", data);
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
+=======
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: getAuthHeaders(),
+>>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
         body: JSON.stringify({
           username: newUser.username,
           email: newUser.email,
@@ -174,9 +212,14 @@ console.log("Raw /api/users response:", data);
 
       const data = await response.json();
 
+<<<<<<< HEAD
       if (response.ok && data.success) {
         // Optionally, fetch users again or add the new user to the list
         fetchUsers();
+=======
+      if (data.success) {
+        await fetchUsers(); // Refresh the user list
+>>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
         setNewUser({
           username: "",
           email: "",
@@ -188,34 +231,100 @@ console.log("Raw /api/users response:", data);
         });
         setIsCreateDialogOpen(false);
       } else {
+<<<<<<< HEAD
         alert(data.message || "Failed to create user.");
       }
     } catch (error) {
       alert("Error creating user.");
       console.error(error);
+=======
+        alert(data.message || "Failed to create user");
+      }
+    } catch (error) {
+      console.error("Create user error:", error);
+      alert("Failed to create user");
+>>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
     }
   };
 
-  const handleEditUser = (e) => {
+  const handleEditUser = async (e) => {
     e.preventDefault();
     if (!editingUser) return;
 
-    setUsers((prev) =>
-      prev.map((u) => (u.id === editingUser.id ? { ...u, ...editingUser } : u)),
-    );
-    setEditingUser(null);
-    setIsEditDialogOpen(false);
+    try {
+      const response = await fetch(`/api/users/${editingUser.id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          firstName: editingUser.firstName,
+          lastName: editingUser.lastName,
+          email: editingUser.email,
+          role: editingUser.role,
+          isActive: editingUser.isActive,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        await fetchUsers(); // Refresh the user list
+        setEditingUser(null);
+        setIsEditDialogOpen(false);
+      } else {
+        alert(data.message || "Failed to update user");
+      }
+    } catch (error) {
+      console.error("Update user error:", error);
+      alert("Failed to update user");
+    }
   };
 
-  const handleToggleStatus = (userId, isActive) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, isActive } : u)),
-    );
+  const handleToggleStatus = async (userId, isActive) => {
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ isActive }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        await fetchUsers(); // Refresh the user list
+      } else {
+        alert(data.message || "Failed to update user status");
+      }
+    } catch (error) {
+      console.error("Toggle status error:", error);
+      alert("Failed to update user status");
+    }
   };
 
+<<<<<<< HEAD
   const handleDeleteUser = (userId) => {
     if (confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
       setUsers((prev) => prev.filter((u) => u.id !== userId));
+=======
+  const handleDeleteUser = async (userId) => {
+    if (confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
+      try {
+        const response = await fetch(`/api/users/${userId}`, {
+          method: "DELETE",
+          headers: getAuthHeaders(),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          await fetchUsers(); // Refresh the user list
+        } else {
+          alert(data.message || "Failed to delete user");
+        }
+      } catch (error) {
+        console.error("Delete user error:", error);
+        alert("Failed to delete user");
+      }
+>>>>>>> 919bbd01bcd1634947060951b13cc89bf60fbaad
     }
   };
 
@@ -243,7 +352,7 @@ console.log("Raw /api/users response:", data);
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Quản lý người dùng
+              Quản lý ng��ời dùng
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               Quản lý thành viên nhóm và cấp độ truy cập của họ

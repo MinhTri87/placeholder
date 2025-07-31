@@ -2,12 +2,41 @@ require("dotenv/config");
 const express = require("express");
 const cors = require("cors");
 const { handleDemo } = require("./routes/demo");
-const { handleLogin, handleRegister, handleAuthCheck, authenticateToken } = require("./routes/auth");
-const { handleGetStats, handleGetRecentActivity, handleGetFullActivity } = require("./routes/stats");
-const { handleGetProjects, handleCreateProject, handleUpdateProject } = require("./routes/projects");
-const { handleGetTasks, handleCreateTask, handleUpdateTask } = require("./routes/tasks");
-const { handleGetUsers, handleCreateUser, handleUpdateUser, handleDeleteUser } = require("./routes/users");
-const { handleGetMessages, handleSendMessage, handleGetPrivateMessages, handleSendPrivateMessage, handleGetUserList, handleGetUnreadCount } = require("./routes/chat");
+const {
+  handleLogin,
+  handleRegister,
+  handleAuthCheck,
+  authenticateToken,
+} = require("./routes/auth");
+const {
+  handleGetStats,
+  handleGetRecentActivity,
+  handleGetFullActivity,
+} = require("./routes/stats");
+const {
+  handleGetProjects,
+  handleCreateProject,
+  handleUpdateProject,
+} = require("./routes/projects");
+const {
+  handleGetTasks,
+  handleCreateTask,
+  handleUpdateTask,
+} = require("./routes/tasks");
+const {
+  handleGetUsers,
+  handleCreateUser,
+  handleUpdateUser,
+  handleDeleteUser,
+} = require("./routes/users");
+const {
+  handleGetMessages,
+  handleSendMessage,
+  handleGetPrivateMessages,
+  handleSendPrivateMessage,
+  handleGetUserList,
+  handleGetUnreadCount,
+} = require("./routes/chat");
 const { connectToDatabase } = require("./db/connection");
 
 function createServer() {
@@ -62,7 +91,6 @@ function createServer() {
   app.post("/api/chat/private/:userId", handleSendPrivateMessage);
   app.get("/api/chat/users", handleGetUserList);
   app.get("/api/chat/unread", handleGetUnreadCount);
-
   return app;
 }
 
