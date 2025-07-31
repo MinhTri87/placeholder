@@ -12,7 +12,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Shield, Users } from "lucide-react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 
 export default function Login() {
   const { login, isAuthenticated, isLoading } = useAuth();
@@ -22,6 +22,7 @@ export default function Login() {
   });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -41,12 +42,24 @@ export default function Login() {
     setIsSubmitting(true);
 
     try {
-      const result = await login(formData);
-      if (!result.success) {
-        setError(result.message || "Login failed");
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await response.json();
+      if (response.ok && data.token) {
+        localStorage.setItem("auth_token", data.token); // Save JWT to localStorage
+        if (data.user && data.user.id) {
+          localStorage.setItem("user_ID", data.user.id); // Save user ID
+          localStorage.setItem("user_username", data.user.username); // Save username
+        }
+        navigate("/"); // Redirect to home or dashboard
+      } else {
+        setError(data.message || "Login failed");
       }
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError("Network error");
     }
     setIsSubmitting(false);
   };

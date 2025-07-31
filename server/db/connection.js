@@ -52,7 +52,7 @@ const initializeSchema = async () => {
     await pool.request().query(`
       IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Projects' AND xtype='U')
       CREATE TABLE Projects (
-        ID NVARCHAR(50) PRIMARY KEY,
+        ID int IDENTITY(1,1) PRIMARY KEY,
         Name NVARCHAR(255) NOT NULL,
         Description NVARCHAR(MAX),
         Status NVARCHAR(20) CHECK (Status IN ('active', 'completed', 'on-hold', 'cancelled')) DEFAULT 'active',
@@ -68,7 +68,7 @@ const initializeSchema = async () => {
     await pool.request().query(`
       IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ProjectMembers' AND xtype='U')
       CREATE TABLE ProjectMembers (
-        ProjectID NVARCHAR(50),
+        ProjectID int NOT NULL,
         UserID NVARCHAR(50),
         PRIMARY KEY (ProjectID, UserID),
         FOREIGN KEY (ProjectID) REFERENCES Projects(ID) ON DELETE CASCADE,
@@ -80,8 +80,8 @@ const initializeSchema = async () => {
     await pool.request().query(`
       IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Tasks' AND xtype='U')
       CREATE TABLE Tasks (
-        ID NVARCHAR(50) PRIMARY KEY,
-        ProjectID NVARCHAR(50),
+        ID int IDENTITY(1,1) PRIMARY KEY,
+        ProjectID int NOT NULL,
         Title NVARCHAR(255) NOT NULL,
         Description NVARCHAR(MAX),
         Status NVARCHAR(20) CHECK (Status IN ('pending', 'in-progress', 'completed', 'cancelled')) DEFAULT 'pending',

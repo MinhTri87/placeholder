@@ -50,93 +50,6 @@ export default function Projects() {
   });
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  // Mock project data
-  const mockProjects = [
-    {
-      id: "1",
-      name: "Website Redesign",
-      description:
-        "Complete overhaul of the company website with modern design and improved UX",
-      status: "active",
-      progress: 65,
-      createdBy: "Admin User",
-      createdAt: "2024-01-15T00:00:00Z",
-      dueDate: "2024-03-01T00:00:00Z",
-      memberIds: ["1", "2", "3"],
-      members: [
-        { id: "1", name: "Admin User", avatar: "AU" },
-        { id: "2", name: "Jane Smith", avatar: "JS" },
-        { id: "3", name: "Bob Wilson", avatar: "BW" },
-      ],
-      tasks: {
-        total: 12,
-        completed: 8,
-        pending: 4,
-      },
-    },
-    {
-      id: "2",
-      name: "Mobile App Development",
-      description: "Native mobile application for iOS and Android platforms",
-      status: "active",
-      progress: 30,
-      createdBy: "Admin User",
-      createdAt: "2024-01-20T00:00:00Z",
-      dueDate: "2024-04-15T00:00:00Z",
-      memberIds: ["1", "4", "5"],
-      members: [
-        { id: "1", name: "Admin User", avatar: "AU" },
-        { id: "4", name: "Sarah Johnson", avatar: "SJ" },
-        { id: "5", name: "Mike Davis", avatar: "MD" },
-      ],
-      tasks: {
-        total: 18,
-        completed: 5,
-        pending: 13,
-      },
-    },
-    {
-      id: "3",
-      name: "Database Migration",
-      description: "Migrate legacy database to new SQL Server infrastructure",
-      status: "completed",
-      progress: 100,
-      createdBy: "Admin User",
-      createdAt: "2024-01-10T00:00:00Z",
-      dueDate: "2024-02-15T00:00:00Z",
-      memberIds: ["1", "2"],
-      members: [
-        { id: "1", name: "Admin User", avatar: "AU" },
-        { id: "2", name: "Jane Smith", avatar: "JS" },
-      ],
-      tasks: {
-        total: 8,
-        completed: 8,
-        pending: 0,
-      },
-    },
-    {
-      id: "4",
-      name: "Security Audit",
-      description: "Comprehensive security review and vulnerability assessment",
-      status: "paused",
-      progress: 45,
-      createdBy: "Admin User",
-      createdAt: "2024-01-05T00:00:00Z",
-      dueDate: "2024-02-28T00:00:00Z",
-      memberIds: ["1", "3"],
-      members: [
-        { id: "1", name: "Admin User", avatar: "AU" },
-        { id: "3", name: "Bob Wilson", avatar: "BW" },
-      ],
-      tasks: {
-        total: 10,
-        completed: 4,
-        pending: 6,
-      },
-    },
-  ];
-
   useEffect(() => {
     if (isAuthenticated) {
       fetchProjects();
@@ -156,12 +69,15 @@ export default function Projects() {
         const data = await response.json();
         if (data.success && data.data) {
           setProjects(data.data);
+        } else {
+          setProjects([]);
         }
+      } else {
+        setProjects([]);
       }
     } catch (error) {
       console.error('Error fetching projects:', error);
-      // Fallback to mock data
-      setProjects(mockProjects);
+      setProjects([]);
     }
   };
 
@@ -233,7 +149,7 @@ export default function Projects() {
           name: newProject.name,
           description: newProject.description,
           dueDate: newProject.dueDate ? new Date(newProject.dueDate).toISOString() : null,
-          memberIds: [user.id]
+          createdBy: user.id
         })
       });
 
@@ -469,46 +385,46 @@ export default function Projects() {
                   <Progress value={project.progress} className="h-2" />
                 </div>
 
-                {/* Tasks Summary */}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    Tasks:
-                  </span>
-                  <div className="flex space-x-4">
-                    <span className="text-green-600">
-                      {project.tasks.completed} done
-                    </span>
-                    <span className="text-blue-600">
-                      {project.tasks.pending} pending
-                    </span>
-                  </div>
-                </div>
+                // Tasks Summary
+<div className="flex items-center justify-between text-sm">
+  <span className="text-gray-600 dark:text-gray-400">
+    Tasks:
+  </span>
+  <div className="flex space-x-4">
+    <span className="text-green-600">
+      {(project.tasks?.completed ?? 0)} done
+    </span>
+    <span className="text-blue-600">
+      {(project.tasks?.pending ?? 0)} pending
+    </span>
+  </div>
+</div>
 
-                {/* Team Members */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Team:
-                  </span>
-                  <div className="flex -space-x-2">
-                    {project.members.slice(0, 3).map((member) => (
-                      <Avatar
-                        key={member.id}
-                        className="h-6 w-6 border-2 border-white dark:border-gray-800"
-                      >
-                        <AvatarFallback className="text-xs">
-                          {member.avatar}
-                        </AvatarFallback>
-                      </Avatar>
-                    ))}
-                    {project.members.length > 3 && (
-                      <div className="h-6 w-6 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-white dark:border-gray-800 flex items-center justify-center">
-                        <span className="text-xs text-gray-600 dark:text-gray-300">
-                          +{project.members.length - 3}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+// Team Members
+<div className="flex items-center justify-between">
+  <span className="text-sm text-gray-600 dark:text-gray-400">
+    Team:
+  </span>
+  <div className="flex -space-x-2">
+    {(project.members ?? []).slice(0, 3).map((member) => (
+      <Avatar
+        key={member.id}
+        className="h-6 w-6 border-2 border-white dark:border-gray-800"
+      >
+        <AvatarFallback className="text-xs">
+          {member.avatar}
+        </AvatarFallback>
+      </Avatar>
+    ))}
+    {(project.members?.length ?? 0) > 3 && (
+      <div className="h-6 w-6 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-white dark:border-gray-800 flex items-center justify-center">
+        <span className="text-xs text-gray-600 dark:text-gray-300">
+          +{project.members.length - 3}
+        </span>
+      </div>
+    )}
+  </div>
+</div>
 
                 {/* Due Date */}
                 <div className="flex items-center justify-between text-sm">

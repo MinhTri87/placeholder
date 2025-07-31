@@ -1,69 +1,28 @@
-// In-memory storage for users (replace with SQL Server in production)
-let users = [
-  {
-    id: '1',
-    username: 'admin',
-    email: 'admin@groupmanager.com',
-    firstName: 'Admin',
-    lastName: 'User',
-    role: 'manager',
-    isActive: true,
-    createdAt: '2024-01-01T00:00:00Z',
-    lastLogin: new Date().toISOString()
-  },
-  {
-    id: '2',
-    username: 'jane.smith',
-    email: 'jane.smith@groupmanager.com',
-    firstName: 'Jane',
-    lastName: 'Smith',
-    role: 'member',
-    isActive: true,
-    createdAt: '2024-01-05T00:00:00Z',
-    lastLogin: '2024-01-30T09:15:00Z'
-  },
-  {
-    id: '3',
-    username: 'bob.wilson',
-    email: 'bob.wilson@groupmanager.com',
-    firstName: 'Bob',
-    lastName: 'Wilson',
-    role: 'member',
-    isActive: true,
-    createdAt: '2024-01-10T00:00:00Z',
-    lastLogin: '2024-01-29T16:45:00Z'
-  },
-  {
-    id: '4',
-    username: 'sarah.johnson',
-    email: 'sarah.johnson@groupmanager.com',
-    firstName: 'Sarah',
-    lastName: 'Johnson',
-    role: 'member',
-    isActive: false,
-    createdAt: '2024-01-15T00:00:00Z',
-    lastLogin: '2024-01-25T14:20:00Z'
-  },
-  {
-    id: '5',
-    username: 'mike.davis',
-    email: 'mike.davis@groupmanager.com',
-    firstName: 'Mike',
-    lastName: 'Davis',
-    role: 'member',
-    isActive: true,
-    createdAt: '2024-01-20T00:00:00Z',
-    lastLogin: '2024-01-30T11:00:00Z'
-  }
-];
+const sql = require('mssql'); // Make sure you have mssql installed and configured
 
 const handleGetUsers = async (req, res) => {
   try {
-    const response = {
+    // Query users from your SQL Server database
+    const result = await sql.query(`
+      SELECT 
+        id, 
+        username, 
+        email, 
+        firstName, 
+        lastName, 
+        role, 
+        isActive, 
+        createdAt, 
+        lastLogin
+      FROM Users
+    `);
+
+    const users = result.recordset || [];
+
+    res.json({
       success: true,
       data: users
-    };
-    res.json(response);
+    });
   } catch (error) {
     console.error('Get users error:', error);
     res.status(500).json({

@@ -44,6 +44,7 @@ import {
   SortDesc,
 } from "lucide-react";
 import { Navigate } from "react-router-dom";
+import { string } from "zod";
 
 export default function Tasks() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -61,113 +62,14 @@ export default function Tasks() {
     dueDate: "",
   });
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-
-  // Mock data
-  const mockProjects = [
-    { id: "1", name: "Website Redesign" },
-    { id: "2", name: "Mobile App Development" },
-    { id: "3", name: "Database Migration" },
-    { id: "4", name: "Security Audit" },
-  ];
-
-  const mockUsers = [
-    { id: "1", name: "Admin User", role: "manager" },
-    { id: "2", name: "Jane Smith", role: "member" },
-    { id: "3", name: "Bob Wilson", role: "member" },
-    { id: "4", name: "Sarah Johnson", role: "member" },
-    { id: "5", name: "Mike Davis", role: "member" },
-  ];
-
-  const mockTasks = [
-    {
-      id: "1",
-      title: "Design new homepage layout",
-      description: "Create wireframes and mockups for the new homepage design",
-      status: "in_progress",
-      priority: "high",
-      projectId: "1",
-      projectName: "Website Redesign",
-      assignedTo: "2",
-      assigneeName: "Jane Smith",
-      createdBy: "1",
-      createdAt: "2024-01-20T00:00:00Z",
-      dueDate: "2024-02-05T00:00:00Z",
-    },
-    {
-      id: "2",
-      title: "Implement user authentication",
-      description: "Set up secure login and registration system",
-      status: "pending",
-      priority: "high",
-      projectId: "2",
-      projectName: "Mobile App Development",
-      assignedTo: "3",
-      assigneeName: "Bob Wilson",
-      createdBy: "1",
-      createdAt: "2024-01-22T00:00:00Z",
-      dueDate: "2024-02-10T00:00:00Z",
-    },
-    {
-      id: "3",
-      title: "Database schema optimization",
-      description: "Optimize existing database queries and indexing",
-      status: "completed",
-      priority: "medium",
-      projectId: "3",
-      projectName: "Database Migration",
-      assignedTo: "2",
-      assigneeName: "Jane Smith",
-      createdBy: "1",
-      createdAt: "2024-01-15T00:00:00Z",
-      dueDate: "2024-01-30T00:00:00Z",
-    },
-    {
-      id: "4",
-      title: "Security vulnerability assessment",
-      description: "Conduct comprehensive security audit of the application",
-      status: "in_progress",
-      priority: "high",
-      projectId: "4",
-      projectName: "Security Audit",
-      assignedTo: "4",
-      assigneeName: "Sarah Johnson",
-      createdBy: "1",
-      createdAt: "2024-01-18T00:00:00Z",
-      dueDate: "2024-02-15T00:00:00Z",
-    },
-    {
-      id: "5",
-      title: "Mobile UI components",
-      description: "Develop reusable UI components for mobile application",
-      status: "pending",
-      priority: "medium",
-      projectId: "2",
-      projectName: "Mobile App Development",
-      assignedTo: "5",
-      assigneeName: "Mike Davis",
-      createdBy: "1",
-      createdAt: "2024-01-25T00:00:00Z",
-      dueDate: "2024-02-20T00:00:00Z",
-    },
-    {
-      id: "6",
-      title: "User testing and feedback",
-      description: "Conduct user testing sessions and collect feedback",
-      status: "pending",
-      priority: "low",
-      projectId: "1",
-      projectName: "Website Redesign",
-      assignedTo: "3",
-      assigneeName: "Bob Wilson",
-      createdBy: "1",
-      createdAt: "2024-01-28T00:00:00Z",
-      dueDate: "2024-03-01T00:00:00Z",
-    },
-  ];
+  const [projects, setProjects] = useState([]);
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchTasks();
+      fetchProjects();
+      fetchUsers();
     }
   }, [isAuthenticated]);
 
@@ -184,12 +86,45 @@ export default function Tasks() {
         const data = await response.json();
         if (data.success && data.data) {
           setTasks(data.data);
+        } else {
+          setTasks([]);
         }
+      } else {
+        setTasks([]);
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      // Fallback to mock data
-      setTasks(mockTasks);
+      setTasks([]);
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/projects', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setProjects(data.data || []);
+      }
+    } catch (error) {
+      setProjects([]);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/users', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.data || []);
+      }
+    } catch (error) {
+      setUsers([]);
     }
   };
 
@@ -263,36 +198,54 @@ export default function Tasks() {
     }
   };
 
-  const handleCreateTask = (e) => {
+  const handleCreateTask = async (e) => {
     e.preventDefault();
     if (!newTask.title.trim()) return;
 
-    const task = {
-      id: Date.now().toString(),
-      title: newTask.title,
-      description: newTask.description,
-      status: "pending",
-      priority: newTask.priority,
-      projectId: newTask.projectId,
-      projectName:
-        mockProjects.find((p) => p.id === newTask.projectId)?.name ||
-        "No Project",
-      assignedTo: newTask.assignedTo,
-      assigneeName:
-        mockUsers.find((u) => u.id === newTask.assignedTo)?.name ||
-        "Unassigned",
+    // Convert projectId to number
+    const projectId = newTask.projectId;
+    console.log("Creating task with payload:", {
+      ...newTask,
+      projectId: projectId,
+      assignedTo: String(newTask.assignedTo),
       createdBy: user.id,
-      createdAt: new Date().toISOString(),
       dueDate: newTask.dueDate ? new Date(newTask.dueDate).toISOString() : null,
-    };
+    });
 
-    setTasks((prev) => [task, ...prev]);
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...newTask,
+          projectId: projectId, // use the number, not string
+          assignedTo: newTask.assignedTo,
+          createdBy: user.id,
+          dueDate: newTask.dueDate ? new Date(newTask.dueDate).toISOString() : null,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setTasks((prev) => [data.data, ...prev]);
+        }
+      }
+    } catch (error) {
+      console.error('Error creating task:', error);
+    }
+
     setNewTask({
       title: "",
       description: "",
       priority: "medium",
-      projectId: "",
-      assignedTo: "",
+      projectId: 1, // Default to first project
+      assignedTo: 1,
       dueDate: "",
     });
     setIsCreateDialogOpen(false);
@@ -312,12 +265,14 @@ export default function Tasks() {
   };
 
   const getInitials = (name) => {
-    return name
-      .split(" ")
-      .map((n) => n.charAt(0))
-      .join("")
-      .toUpperCase();
-  };
+  if (!name || typeof name !== "string") return "NA";
+  return name
+    .split(" ")
+    .map((n) => n.charAt(0))
+    .join("")
+    .toUpperCase();
+};
+
 
   const taskStats = {
     total: tasks.length,
@@ -416,39 +371,42 @@ export default function Tasks() {
                     <div className="space-y-2">
                       <Label htmlFor="project">Project</Label>
                       <Select
-                        value={newTask.projectId}
+                        value={String(newTask.projectId)}
                         onValueChange={(value) =>
-                          setNewTask((prev) => ({ ...prev, projectId: value }))
+                          setNewTask((prev) => ({ ...prev, projectId: Number(value) }))
                         }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select project" />
                         </SelectTrigger>
                         <SelectContent>
-                          {mockProjects.map((project) => (
-                            <SelectItem key={project.id} value={project.id}>
+                          {projects.map((project) => (
+                            <SelectItem key={project.id} value={String(project.id)}>
                               {project.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="assignee">Assign To</Label>
                       <Select
-                        value={newTask.assignedTo}
+                        value={String(newTask.assignedTo)} // Convert to string for Select{newTask.assignedTo}
                         onValueChange={(value) =>
-                          setNewTask((prev) => ({ ...prev, assignedTo: value }))
-                        }
+  setNewTask((prev) => ({ ...prev, assignedTo: Number(value) }))
+}
+
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select team member" />
                         </SelectTrigger>
                         <SelectContent>
-                          {mockUsers.map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.name} ({user.role})
-                            </SelectItem>
+                          {users.map((user) => (
+                            <SelectItem key={user.id} value={String(user.id)}>
+  {user.firstName} {user.lastName}
+</SelectItem>
+
                           ))}
                         </SelectContent>
                       </Select>
@@ -596,7 +554,7 @@ export default function Tasks() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Assignees</SelectItem>
-                      {mockUsers.map((user) => (
+                      {users.map((user) => (
                         <SelectItem key={user.id} value={user.id}>
                           {user.name}
                         </SelectItem>
@@ -638,7 +596,7 @@ export default function Tasks() {
                                 {task.priority} priority
                               </Badge>
                               <span className="text-gray-500 dark:text-gray-400">
-                                Project: {task.projectName}
+                                Project: {task.projectId}
                               </span>
                               <span className="flex items-center text-gray-500 dark:text-gray-400">
                                 <Calendar className="h-4 w-4 mr-1" />
@@ -720,7 +678,7 @@ export default function Tasks() {
                             {task.priority} priority
                           </Badge>
                           <span className="text-gray-500 dark:text-gray-400">
-                            Project: {task.projectName}
+                            Project: {task.projectId}
                           </span>
                           <span className="flex items-center text-gray-500 dark:text-gray-400">
                             <Calendar className="h-4 w-4 mr-1" />

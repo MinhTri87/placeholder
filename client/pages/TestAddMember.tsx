@@ -44,9 +44,7 @@ import {
   UserX,
   UserCheck,
 } from "lucide-react";
-import { Loader2, UserPlus, Users, CheckCircle } from "lucide-react";
-import { Link } from "react-router-dom";
-import {Register} from "./Register"
+import { Navigate } from "react-router-dom";
 
 export default function AddMember() {
   const { user, isAuthenticated, isLoading } = useAuth();

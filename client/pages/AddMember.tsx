@@ -65,70 +65,35 @@ export default function AddMember() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  // Mock user data
-  const mockUsers = [
-    {
-      id: "1",
-      username: "admin",
-      email: "admin@groupmanager.com",
-      firstName: "Admin",
-      lastName: "User",
-      role: "manager",
-      isActive: true,
-      createdAt: "2024-01-01T00:00:00Z",
-      lastLogin: "2024-01-30T10:30:00Z",
-    },
-    {
-      id: "2",
-      username: "jane.smith",
-      email: "jane.smith@groupmanager.com",
-      firstName: "Jane",
-      lastName: "Smith",
-      role: "member",
-      isActive: true,
-      createdAt: "2024-01-05T00:00:00Z",
-      lastLogin: "2024-01-30T09:15:00Z",
-    },
-    {
-      id: "3",
-      username: "bob.wilson",
-      email: "bob.wilson@groupmanager.com",
-      firstName: "Bob",
-      lastName: "Wilson",
-      role: "member",
-      isActive: true,
-      createdAt: "2024-01-10T00:00:00Z",
-      lastLogin: "2024-01-29T16:45:00Z",
-    },
-    {
-      id: "4",
-      username: "sarah.johnson",
-      email: "sarah.johnson@groupmanager.com",
-      firstName: "Sarah",
-      lastName: "Johnson",
-      role: "member",
-      isActive: false,
-      createdAt: "2024-01-15T00:00:00Z",
-      lastLogin: "2024-01-25T14:20:00Z",
-    },
-    {
-      id: "5",
-      username: "mike.davis",
-      email: "mike.davis@groupmanager.com",
-      firstName: "Mike",
-      lastName: "Davis",
-      role: "member",
-      isActive: true,
-      createdAt: "2024-01-20T00:00:00Z",
-      lastLogin: "2024-01-30T11:00:00Z",
-    },
-  ];
-
   useEffect(() => {
     if (isAuthenticated) {
-      setUsers(mockUsers);
+      fetchUsers();
     }
   }, [isAuthenticated]);
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+console.log("Raw /api/users response:", data);
+      if (response.ok && data.success && data.data) {
+        setUsers(data.data);
+        console.log("Users set:", data.data);
+      } else {
+        setUsers([]);
+        console.warn("Fetch users failed:", data.message || "Unknown error");
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setUsers([]); // Network or other error
+    }
+  };
 
   if (isLoading) {
     return (
@@ -180,7 +145,7 @@ export default function AddMember() {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const handleCreateUser = (e) => {
+  const handleCreateUser = async (e) => {
     e.preventDefault();
     if (
       !newUser.username.trim() ||
@@ -189,29 +154,46 @@ export default function AddMember() {
     )
       return;
 
-    const user = {
-      id: Date.now().toString(),
-      username: newUser.username,
-      email: newUser.email,
-      firstName: newUser.firstName,
-      lastName: newUser.lastName,
-      role: newUser.role,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      lastLogin: null,
-    };
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          username: newUser.username,
+          email: newUser.email,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          role: newUser.role,
+          password: newUser.password,
+        }),
+      });
 
-    setUsers((prev) => [user, ...prev]);
-    setNewUser({
-      username: "",
-      email: "",
-      firstName: "",
-      lastName: "",
-      role: "member",
-      password: "",
-      confirmPassword: "",
-    });
-    setIsCreateDialogOpen(false);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Optionally, fetch users again or add the new user to the list
+        fetchUsers();
+        setNewUser({
+          username: "",
+          email: "",
+          firstName: "",
+          lastName: "",
+          role: "member",
+          password: "",
+          confirmPassword: "",
+        });
+        setIsCreateDialogOpen(false);
+      } else {
+        alert(data.message || "Failed to create user.");
+      }
+    } catch (error) {
+      alert("Error creating user.");
+      console.error(error);
+    }
   };
 
   const handleEditUser = (e) => {
@@ -232,7 +214,7 @@ export default function AddMember() {
   };
 
   const handleDeleteUser = (userId) => {
-    if (confirm("Bạn có chắc chắn muốn xóa người d��ng này?")) {
+    if (confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
       setUsers((prev) => prev.filter((u) => u.id !== userId));
     }
   };
@@ -541,85 +523,91 @@ export default function AddMember() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {filteredUsers.map((u) => (
-                <div
-                  key={u.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
-                >
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback>
-                        {getInitials(u.firstName, u.lastName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {u.firstName} {u.lastName}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        @{u.username} • {u.email}
-                      </p>
+              {/* Debug: Show what is being rendered */}
+              {console.log("Rendering users:", filteredUsers)}
+              {filteredUsers.length > 0 ? (
+                filteredUsers.map((u) => (
+                  <div
+                    key={u.id}
+                    className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback>
+                          {getInitials(u.firstName || "", u.lastName || "")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {(u.firstName || "") + " " + (u.lastName || "")}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          @{u.username || "unknown"} • {u.email || ""}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-6">
+                      <div className="text-center">
+                        <Badge
+                          variant={u.role === "manager" ? "default" : "secondary"}
+                        >
+                          <Shield className="h-3 w-3 mr-1" />
+                          {u.role}
+                        </Badge>
+                      </div>
+                      <div className="text-center">
+                        <Badge variant={u.isActive ? "default" : "destructive"}>
+                          {u.isActive ? (
+                            <UserCheck className="h-3 w-3 mr-1" />
+                          ) : (
+                            <UserX className="h-3 w-3 mr-1" />
+                          )}
+                          {u.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 text-center min-w-[100px]">
+                        <p>Last login</p>
+                        <p>{formatDate(u.lastLogin)}</p>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          checked={u.isActive}
+                          onCheckedChange={(checked) =>
+                            handleToggleStatus(u.id, checked)
+                          }
+                          disabled={u.id === user.id}
+                        />
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingUser(u);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteUser(u.id)}
+                          disabled={u.id === user.id}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="flex items-center space-x-6">
-                    <div className="text-center">
-                      <Badge
-                        variant={u.role === "manager" ? "default" : "secondary"}
-                      >
-                        <Shield className="h-3 w-3 mr-1" />
-                        {u.role}
-                      </Badge>
-                    </div>
-
-                    <div className="text-center">
-                      <Badge variant={u.isActive ? "default" : "destructive"}>
-                        {u.isActive ? (
-                          <UserCheck className="h-3 w-3 mr-1" />
-                        ) : (
-                          <UserX className="h-3 w-3 mr-1" />
-                        )}
-                        {u.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                    </div>
-
-                    <div className="text-sm text-gray-500 dark:text-gray-400 text-center min-w-[100px]">
-                      <p>Last login</p>
-                      <p>{formatDate(u.lastLogin)}</p>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        checked={u.isActive}
-                        onCheckedChange={(checked) =>
-                          handleToggleStatus(u.id, checked)
-                        }
-                        disabled={u.id === user.id} // Can't disable yourself
-                      />
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setEditingUser(u);
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteUser(u.id)}
-                        disabled={u.id === user.id} // Can't delete yourself
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 dark:text-gray-400">
+                  No users found.
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
