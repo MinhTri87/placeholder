@@ -494,9 +494,9 @@ export default function Tasks() {
                           <SelectValue placeholder="Select team member" />
                         </SelectTrigger>
                         <SelectContent>
-                          {mockUsers.map((user) => (
+                          {users.map((user) => (
                             <SelectItem key={user.id} value={user.id}>
-                              {user.name} ({user.role})
+                              {user.firstName} {user.lastName} ({user.role})
                             </SelectItem>
                           ))}
                         </SelectContent>
