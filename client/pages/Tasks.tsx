@@ -263,30 +263,38 @@ export default function Tasks() {
     }
   };
 
-  const handleCreateTask = (e) => {
+  const handleCreateTask = async (e) => {
     e.preventDefault();
     if (!newTask.title.trim()) return;
 
-    const task = {
-      id: Date.now().toString(),
-      title: newTask.title,
-      description: newTask.description,
-      status: "pending",
-      priority: newTask.priority,
-      projectId: newTask.projectId,
-      projectName:
-        mockProjects.find((p) => p.id === newTask.projectId)?.name ||
-        "No Project",
-      assignedTo: newTask.assignedTo,
-      assigneeName:
-        mockUsers.find((u) => u.id === newTask.assignedTo)?.name ||
-        "Unassigned",
-      createdBy: user.id,
-      createdAt: new Date().toISOString(),
-      dueDate: newTask.dueDate ? new Date(newTask.dueDate).toISOString() : null,
-    };
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: newTask.title,
+          description: newTask.description,
+          priority: newTask.priority,
+          projectId: newTask.projectId || null,
+          assignedTo: newTask.assignedTo || null,
+          dueDate: newTask.dueDate ? new Date(newTask.dueDate).toISOString() : null
+        })
+      });
 
-    setTasks((prev) => [task, ...prev]);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          await fetchTasks(); // Refresh the task list
+        }
+      }
+    } catch (error) {
+      console.error('Error creating task:', error);
+    }
+
     setNewTask({
       title: "",
       description: "",
@@ -298,12 +306,27 @@ export default function Tasks() {
     setIsCreateDialogOpen(false);
   };
 
-  const handleStatusChange = (taskId, newStatus) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId ? { ...task, status: newStatus } : task,
-      ),
-    );
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          await fetchTasks(); // Refresh the task list
+        }
+      }
+    } catch (error) {
+      console.error('Error updating task status:', error);
+    }
   };
 
   const formatDate = (dateString) => {
