@@ -52,6 +52,46 @@ export default function ActivityPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [timeRange, setTimeRange] = useState("7days");
   const [activityType, setActivityType] = useState("all");
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [fullActivity, setFullActivity] = useState([]);
+  const [loadingActivity, setLoadingActivity] = useState(true);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchActivityData();
+    }
+  }, [isAuthenticated]);
+
+  const fetchActivityData = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const headers = {
+        'Authorization': `Bearer ${token}`
+      };
+
+      // Fetch recent activity
+      const recentResponse = await fetch('/api/activity/recent', { headers });
+      if (recentResponse.ok) {
+        const recentData = await recentResponse.json();
+        if (recentData.success && recentData.data) {
+          setRecentActivities(recentData.data);
+        }
+      }
+
+      // Fetch full activity
+      const fullResponse = await fetch('/api/activity/full', { headers });
+      if (fullResponse.ok) {
+        const fullData = await fullResponse.json();
+        if (fullData.success && fullData.data) {
+          setFullActivity(fullData.data);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching activity:', error);
+    } finally {
+      setLoadingActivity(false);
+    }
+  };
 
   // Mock data for charts
   const weeklyActivity = [
