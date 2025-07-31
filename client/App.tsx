@@ -10,6 +10,7 @@ import { AuthProvider } from "@/lib/auth-context";
 
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Chat from "./pages/Chat";
 import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
@@ -29,6 +30,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/tasks" element={<Tasks />} />

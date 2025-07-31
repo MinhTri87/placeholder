@@ -43,10 +43,10 @@ export default function Login() {
     try {
       const result = await login(formData);
       if (!result.success) {
-        setError(result.message || "Đăng nhập thất bại");
+        setError(result.message || "Login failed");
       }
     } catch (err) {
-      setError("Đã xảy ra lỗi không mong muốn");
+      setError("An unexpected error occurred");
     }
     setIsSubmitting(false);
   };
@@ -71,17 +71,17 @@ export default function Login() {
             GroupManager
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Đăng nhập vào tài khoản của bạn
+            Sign in to your account
           </p>
         </div>
 
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">
-              Chào mừng trở lại
+              Welcome Back
             </CardTitle>
             <CardDescription className="text-center">
-              Nhập thông tin đ��ng nhập để truy cập hệ thống quản lý nhóm
+              Enter your credentials to access the group management system
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -93,7 +93,7 @@ export default function Login() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="username">Tên đăng nhập</Label>
+                <Label htmlFor="username">Username</Label>
                 <Input
                   id="username"
                   name="username"
@@ -101,13 +101,13 @@ export default function Login() {
                   required
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder="Nhập tên đăng nhập"
+                  placeholder="Enter your username"
                   disabled={isSubmitting}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Mật khẩu</Label>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   name="password"
@@ -115,7 +115,7 @@ export default function Login() {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Nhập mật khẩu"
+                  placeholder="Enter your password"
                   disabled={isSubmitting}
                 />
               </div>
@@ -124,25 +124,43 @@ export default function Login() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang đăng nhập...
+                    Signing in...
                   </>
                 ) : (
                   <>
                     <Shield className="mr-2 h-4 w-4" />
-                    Đăng nhập
+                    Sign In
                   </>
                 )}
               </Button>
             </form>
 
-            <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-              <p>Tài khoản demo:</p>
-              <p>
-                <strong>Quản lý:</strong> admin / admin123
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Don't have an account?{" "}
+                <a
+                  href="/register"
+                  className="font-medium text-primary hover:underline"
+                >
+                  Sign up
+                </a>
               </p>
-              <p>
-                <strong>Thành viên:</strong> user / user123
-              </p>
+
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <p>Demo accounts:</p>
+                <p>
+                  <strong>Manager:</strong> admin / admin123
+                </p>
+                <p>
+                  <strong>Member:</strong> user / user123
+                </p>
+                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    <strong>Note:</strong> This system now supports proper user registration and password security.
+                    Demo accounts are available for testing purposes only.
+                  </p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

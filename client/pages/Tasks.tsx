@@ -167,9 +167,31 @@ export default function Tasks() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      setTasks(mockTasks);
+      fetchTasks();
     }
   }, [isAuthenticated]);
+
+  const fetchTasks = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/tasks', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setTasks(data.data);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      // Fallback to mock data
+      setTasks(mockTasks);
+    }
+  };
 
   if (isLoading) {
     return (

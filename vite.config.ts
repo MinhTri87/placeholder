@@ -6,7 +6,7 @@ import { createServer } from "./server";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
+    host: "0.0.0.0", // Bind to all interfaces for local network access
     port: 8080,
     fs: {
       allow: ["./client", "./shared"],

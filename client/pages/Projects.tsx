@@ -139,9 +139,31 @@ export default function Projects() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      setProjects(mockProjects);
+      fetchProjects();
     }
   }, [isAuthenticated]);
+
+  const fetchProjects = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/projects', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setProjects(data.data);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      // Fallback to mock data
+      setProjects(mockProjects);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -195,33 +217,36 @@ export default function Projects() {
     }
   };
 
-  const handleCreateProject = (e) => {
+  const handleCreateProject = async (e) => {
     e.preventDefault();
     if (!newProject.name.trim()) return;
 
-    const project = {
-      id: Date.now().toString(),
-      name: newProject.name,
-      description: newProject.description,
-      status: "active",
-      progress: 0,
-      createdBy: `${user.firstName} ${user.lastName}`,
-      createdAt: new Date().toISOString(),
-      dueDate: newProject.dueDate
-        ? new Date(newProject.dueDate).toISOString()
-        : null,
-      memberIds: [user.id],
-      members: [
-        {
-          id: user.id,
-          name: `${user.firstName} ${user.lastName}`,
-          avatar: `${user.firstName[0]}${user.lastName[0]}`,
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-      ],
-      tasks: { total: 0, completed: 0, pending: 0 },
-    };
+        body: JSON.stringify({
+          name: newProject.name,
+          description: newProject.description,
+          dueDate: newProject.dueDate ? new Date(newProject.dueDate).toISOString() : null,
+          memberIds: [user.id]
+        })
+      });
 
-    setProjects((prev) => [project, ...prev]);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setProjects(prev => [data.data, ...prev]);
+        }
+      }
+    } catch (error) {
+      console.error('Error creating project:', error);
+    }
+
     setNewProject({ name: "", description: "", dueDate: "" });
     setIsCreateDialogOpen(false);
   };
