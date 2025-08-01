@@ -1,4 +1,6 @@
+const jwt = require('jsonwebtoken');
 const sql = require('mssql'); // Ensure mssql is installed and configured
+const { handleActivityCommit } = require('./activity');
 
 const handleGetProjects = async (req, res) => {
   try {
@@ -34,6 +36,12 @@ const handleGetProjects = async (req, res) => {
 const handleCreateProject = async (req, res) => {
   try {
     const { name, description, dueDate, createdBy } = req.body;
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace("Bearer ", "");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // adjust secret
+    const currentUserId = decoded.userId; // Assuming your payload includes `id`
+    console.log("Current user ID:", currentUserId);
+    console.log("decoded token:", decoded);
 
     // Create a new SQL request
     const request = new sql.Request();
@@ -72,6 +80,7 @@ const handleCreateProject = async (req, res) => {
       success: true,
       data: newProject
     });
+    handleActivityCommit(currentUserId, `create project ${name}`);
   } catch (error) {
     console.error('Create project error:', error);
     res.status(500).json({
@@ -83,6 +92,12 @@ const handleCreateProject = async (req, res) => {
 
 const handleUpdateProject = async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace("Bearer ", "");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // adjust secret
+    const currentUserId = decoded.userId; // Assuming your payload includes `id`
+    console.log("Current user ID:", currentUserId);
+    console.log("decoded token:", decoded);
     const { id } = req.params;
     const updates = req.body;
     
@@ -102,7 +117,8 @@ const handleUpdateProject = async (req, res) => {
       success: true,
       data: { id, ...updates }
     };
-    
+    handleActivityCommit(currentUserId, `update project ${updates.name}`);
+
     res.json(response);
   } catch (error) {
     console.error('Update project error:', error);

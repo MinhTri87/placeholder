@@ -2,6 +2,37 @@ require("dotenv/config");
 const express = require("express");
 const cors = require("cors");
 const { handleDemo } = require("./routes/demo");
+const http = require('http');
+const { Server } = require('socket.io');
+
+const app = require('./app'); // your Express app
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: ".../client/pages", // Or your frontend URL
+    methods: ["GET", "POST"]
+  }
+});
+
+// Socket event handling
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+
+  socket.on('private_message', ({ to, message }) => {
+    io.to(to).emit('private_message', message);
+  });
+
+  socket.on('join', (userId) => {
+    socket.join(userId); // Join room with user's ID
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
+
+module.exports = { server, io };
+
 const {
   handleLogin,
   handleRegister,

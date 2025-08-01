@@ -1,5 +1,8 @@
-const sql = require('mssql'); // Make sure you have mssql installed and configured
+import{handleActivityCommit}from'./activity'; // Import the activity logging function
 
+const sql = require('mssql'); // Make sure you have mssql installed and configured
+const jwt=require('jsonwebtoken');
+const { handleAuthCheck } = require('./auth');
 // Helper function to verify token (same as in auth.js)
 const verifyToken = (token) => {
   try {
@@ -52,21 +55,10 @@ const handleCreateUser = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace("Bearer ", "");
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: "Authentication required",
-      });
-    }
-
-    const userId = verifyToken(token);
-    if (!userId || !isUserManager(userId)) {
-      return res.status(403).json({
-        success: false,
-        error: "Manager access required",
-      });
-    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // adjust secret
+    const currentUserId = decoded.userId; // Assuming your payload includes `id`
+    console.log("Current user ID:", currentUserId);
+    console.log("decoded token:", decoded);
 
     const { username, email, firstName, lastName, role, password } = req.body;
 
@@ -107,6 +99,8 @@ const handleCreateUser = async (req, res) => {
       data: newUser,
       message: "User created successfully",
     });
+    handleActivityCommit(currentUserId, "create_user");
+    console.log(result);
   } catch (error) {
     console.error("Create user error:", error);
     res.status(500).json({
@@ -120,62 +114,48 @@ const handleUpdateUser = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace("Bearer ", "");
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: "Authentication required",
-      });
-    }
-
-    const currentUserId = verifyToken(token);
-    if (!currentUserId || !isUserManager(currentUserId)) {
-      return res.status(403).json({
-        success: false,
-        error: "Manager access required",
-      });
-    }
-
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // adjust secret
+    const currentUserId = decoded.userId; // Assuming your payload includes `id`
+    console.log("Current user ID:", currentUserId);
+    console.log("decoded token:", decoded);
+    
+    //parsing data
     const { id } = req.params;
-    const { firstName, lastName, email, role, isActive } = req.body;
-
-    const userIndex = users.findIndex((u) => u.id === id);
-    if (userIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: "User not found",
-      });
-    }
-
-    // Prevent changing own role
-    if (id === currentUserId && role && users[userIndex].role !== role) {
-      return res.status(400).json({
-        success: false,
-        error: "Cannot change your own role",
-      });
-    }
+    const { firstName, lastName, email, role, isActive, username } = req.body;
 
     // Update user
-    users[userIndex] = {
-      ...users[userIndex],
-      firstName: firstName || users[userIndex].firstName,
-      lastName: lastName || users[userIndex].lastName,
-      email: email || users[userIndex].email,
-      role: role || users[userIndex].role,
-      isActive: isActive !== undefined ? isActive : users[userIndex].isActive,
-    };
+    const request= new sql.Request();
+      request.input("id", sql.VarChar, id)
+      request.input("username", sql.NVarChar, username)
+      request.input("firstName", sql.NVarChar, firstName)
+      request.input("lastName", sql.NVarChar, lastName)
+      request.input("email", sql.NVarChar, email)
+      request.input("role", sql.VarChar, role)
+      request.input("isActive", sql.Bit, isActive)
+      const result=await request.query(`
+        UPDATE users
+        SET firstName = @firstName,
+            username = @username,
+            lastName = @lastName,
+            email = @email,
+            role = @role,
+            isActive = @isActive
+        WHERE id = @id
+      `);
 
     res.json({
       success: true,
-      data: users[userIndex],
       message: "User updated successfully",
     });
+    handleActivityCommit(currentUserId, `update user ${username}`);
+    console.log("User updated successfully:", id);
   } catch (error) {
     console.error("Update user error:", error);
     res.status(500).json({
       success: false,
       error: "Failed to update user",
     });
+
   }
 };
 
@@ -183,46 +163,25 @@ const handleDeleteUser = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace("Bearer ", "");
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: "Authentication required",
-      });
-    }
-
-    const currentUserId = verifyToken(token);
-    if (!currentUserId || !isUserManager(currentUserId)) {
-      return res.status(403).json({
-        success: false,
-        error: "Manager access required",
-      });
-    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // adjust secret
+    const currentUserId = decoded.userId; // Assuming your payload includes `id`
+    console.log("Current user ID:", currentUserId);
+    console.log("decoded token:", decoded);
 
     const { id } = req.params;
 
-    // Prevent deleting yourself
-    if (id === currentUserId) {
-      return res.status(400).json({
-        success: false,
-        error: "Cannot delete your own account",
-      });
-    }
-
-    const userIndex = users.findIndex((u) => u.id === id);
-    if (userIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: "User not found",
-      });
-    }
-
-    users.splice(userIndex, 1);
+    const deleteRequest=new sql.Request();
+    deleteRequest.input("id", sql.VarChar, id)
+    const result=await deleteRequest.query(`
+      DELETE FROM users
+      WHERE id = @id
+    `);
 
     res.json({
       success: true,
       message: "User deleted successfully",
     });
+    handleActivityCommit(currentUserId, `delete user ${id}`);
   } catch (error) {
     console.error("Delete user error:", error);
     res.status(500).json({

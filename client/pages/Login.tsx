@@ -181,3 +181,4 @@ export default function Login() {
     </div>
   );
 }
+export const token = localStorage.getItem("auth_token");

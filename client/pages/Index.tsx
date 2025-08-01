@@ -122,21 +122,22 @@ export default function Index() {
   const currentActivity =
     recentActivity.length > 0 ? recentActivity : defaultActivity;
 
-  const formatTimeAgo = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInMinutes = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60),
-    );
+  const formatTimeAgo = (timestamp: string): string => {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
 
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes}m ago`;
-    } else if (diffInMinutes < 1440) {
-      return `${Math.floor(diffInMinutes / 60)}h ago`;
-    } else {
-      return `${Math.floor(diffInMinutes / 1440)}d ago`;
-    }
-  };
+  if (diffInMinutes < 1) return "just now";
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+};
+
+console.log(formatTimeAgo("activity.timestamp")); // test it
+
 
   return (
     <Layout>
@@ -262,7 +263,7 @@ export default function Index() {
                       {activity.userName}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {activity.action}: {activity.details}
+                      {activity.action}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {formatTimeAgo(activity.timestamp)}

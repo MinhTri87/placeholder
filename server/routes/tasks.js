@@ -1,4 +1,6 @@
+const jwt = require('jsonwebtoken');
 const sql = require('mssql');
+import { handleActivityCommit } from './activity';
 
 // Get all tasks
 const handleGetTasks = async (req, res) => {
@@ -35,6 +37,12 @@ const handleGetTasks = async (req, res) => {
 // Create a new task
 const handleCreateTask = async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace("Bearer ", "");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // adjust secret
+    const currentUserId = decoded.userId; // Assuming your payload includes `id`
+    console.log("Current user ID:", currentUserId);
+    console.log("decoded token:", decoded);
     const { title, description, priority, projectId, assignedTo, dueDate, createdBy } = req.body;
 
     const request = new sql.Request();
@@ -74,7 +82,7 @@ const handleCreateTask = async (req, res) => {
       FROM Tasks
       WHERE ID = @ID
     `);
-
+    handleActivityCommit(currentUserId, `create task ${title}`);
     res.json({
       success: true,
       data: fetchResult.recordset[0]
@@ -91,6 +99,12 @@ const handleCreateTask = async (req, res) => {
 // Update a task
 const handleUpdateTask = async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace("Bearer ", "");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // adjust secret
+    const currentUserId = decoded.userId; // Assuming your payload includes `id`
+    console.log("Current user ID:", currentUserId);
+    console.log("decoded token:", decoded);
     const { id } = req.params;
     const updates = req.body;
 
@@ -160,6 +174,7 @@ const handleUpdateTask = async (req, res) => {
       FROM Tasks
       WHERE ID = @ID
     `);
+    handleActivityCommit(currentUserId, `update task ${updates.title}`);
 
     res.json({
       success: true,

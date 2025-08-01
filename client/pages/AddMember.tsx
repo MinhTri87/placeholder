@@ -45,6 +45,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { Navigate } from "react-router-dom";
+import { getAuthHeaders } from "@/lib/utils";
 
 export default function AddMember() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -197,17 +198,22 @@ console.log("Raw /api/users response:", data);
     }
   };
 
-  const handleEditUser = async (e) => {
+  const handleUpdateUser = async (e) => {
     e.preventDefault();
     if (!editingUser) return;
 
     try {
+      const token = localStorage.getItem('auth_token');
       const response = await fetch(`/api/users/${editingUser.id}`, {
         method: "PUT",
-        headers: getAuthHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           firstName: editingUser.firstName,
           lastName: editingUser.lastName,
+          username: editingUser.username,
           email: editingUser.email,
           role: editingUser.role,
           isActive: editingUser.isActive,
@@ -229,31 +235,56 @@ console.log("Raw /api/users response:", data);
     }
   };
 
-  const handleToggleStatus = async (userId, isActive) => {
-    try {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: "PUT",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ isActive }),
-      });
+  const handleToggleStatus = async (userId, newStatus) => {
+  const userToUpdate = users.find((u) => u.id === userId);
+  if (!userToUpdate) return;
 
-      const data = await response.json();
+  try {
+    const response = await fetch(`/api/users/${userId}`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        ...userToUpdate,
+        isActive: newStatus, // only change is here
+      }),
+    });
 
-      if (data.success) {
-        await fetchUsers(); // Refresh the user list
-      } else {
-        alert(data.message || "Failed to update user status");
-      }
-    } catch (error) {
-      console.error("Toggle status error:", error);
-      alert("Failed to update user status");
+    const data = await response.json();
+
+    if (data.success) {
+      await fetchUsers();
+    } else {
+      alert(data.message || "Failed to update user status");
     }
-  };
+  } catch (error) {
+    console.error("Toggle status error:", error);
+    alert("Failed to update user status");
+  }
+};
 
-  const handleDeleteUser = (userId) => {
+
+  const handleDeleteUser = async(userId) => {
     if (confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
       setUsers((prev) => prev.filter((u) => u.id !== userId));
     }
+    const token = localStorage.getItem('auth_token');
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "DELETE",
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setUsers((prev) => prev.filter((u) => u.id !== userId));
+      }
+    } catch (error) {
+      console.error("Delete user error:", error);
+      alert("Failed to delete user");
+    }
+
   };
 
   const formatDate = (dateString) => {
@@ -280,7 +311,7 @@ console.log("Raw /api/users response:", data);
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Quản lý ng��ời dùng
+              Quản lý người dùng
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               Quản lý thành viên nhóm và cấp độ truy cập của họ
@@ -624,6 +655,7 @@ console.log("Raw /api/users response:", data);
                             setEditingUser(u);
                             setIsEditDialogOpen(true);
                           }}
+                          disabled={u.id===user.id}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -659,7 +691,7 @@ console.log("Raw /api/users response:", data);
               </DialogDescription>
             </DialogHeader>
             {editingUser && (
-              <form onSubmit={handleEditUser} className="space-y-4">
+              <form onSubmit={handleUpdateUser} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="editFirstName">First Name</Label>
@@ -691,22 +723,38 @@ console.log("Raw /api/users response:", data);
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="editEmail">Email</Label>
-                  <Input
-                    id="editEmail"
-                    type="email"
-                    value={editingUser.email}
-                    onChange={(e) =>
-                      setEditingUser((prev) => ({
-                        ...prev,
-                        email: e.target.value,
-                      }))
-                    }
-                    required
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editUsername">Username</Label>
+                    <Input
+                      id="editUserName"
+                      value={editingUser.username}
+                      onChange={(e) =>
+                        setEditingUser((prev) => ({
+                          ...prev,
+                          username: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editEmail">Email</Label>
+                    <Input
+                      id="editEmail"
+                      type="email"
+                      value={editingUser.email}
+                      onChange={(e) =>
+                        setEditingUser((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
                 </div>
-
+              
                 <div className="space-y-2">
                   <Label htmlFor="editRole">Role</Label>
                   <Select

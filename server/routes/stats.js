@@ -1,113 +1,68 @@
-// Mock data for demonstration (replace with SQL Server queries)
-const mockStats = {
-  totalMembers: 12,
-  activeMembers: 10,
-  managersCount: 2,
-  membersCount: 10,
-};
-
-const mockActivity = [
-  {
-    id: "1",
-    userId: "1",
-    userName: "John Doe",
-    action: "User Login",
-    details: "Logged in from 192.168.1.100",
-    timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "2",
-    userId: "2",
-    userName: "Jane Smith",
-    action: "Member Added",
-    details: "Added new member: Mike Johnson",
-    timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "3",
-    userId: "3",
-    userName: "Bob Wilson",
-    action: "Profile Updated",
-    details: "Updated contact information",
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "4",
-    userId: "1",
-    userName: "Admin User",
-    action: "Settings Updated",
-    details: "Modified group permissions",
-    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "5",
-    userId: "4",
-    userName: "Sarah Johnson",
-    action: "User Login",
-    details: "Logged in from 10.0.0.15",
-    timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-  },
-];
+const sql = require("mssql");
 
 const handleGetStats = async (req, res) => {
   try {
-    // In production, replace with SQL Server query
-    // SELECT COUNT(*) as totalMembers FROM Users WHERE isActive = 1
-    // SELECT COUNT(*) as activeMembers FROM Users WHERE lastLogin > DATEADD(day, -1, GETDATE())
-    // etc.
+    const request = new sql.Request();
 
-    const response = {
-      success: true,
-      data: mockStats,
+    const totalMembersQuery = await request.query(
+      "SELECT COUNT(*) AS totalMembers FROM Users"
+    );
+
+    const activeMembersQuery = await request.query(
+      "SELECT COUNT(*) AS activeMembers FROM Users WHERE lastLogin > DATEADD(day, -1, GETDATE())"
+    );
+
+    const managersCountQuery = await request.query(
+      "SELECT COUNT(*) AS managersCount FROM Users WHERE role = 'manager'"
+    );
+
+    const membersCountQuery = await request.query(
+      "SELECT COUNT(*) AS membersCount FROM Users WHERE role = 'member'"
+    );
+
+    const data = {
+      totalMembers: totalMembersQuery.recordset[0].totalMembers,
+      activeMembers: activeMembersQuery.recordset[0].activeMembers,
+      managersCount: managersCountQuery.recordset[0].managersCount,
+      membersCount: membersCountQuery.recordset[0].membersCount,
     };
 
-    res.json(response);
+    res.json({ success: true, data });
   } catch (error) {
     console.error("Stats error:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch stats",
-    });
+    res.status(500).json({ success: false, error: "Failed to fetch stats" });
   }
 };
 
 const handleGetRecentActivity = async (req, res) => {
   try {
-    // In production, replace with SQL Server query
-    // SELECT TOP 10 * FROM ActivityLog ORDER BY timestamp DESC
+    const request = new sql.Request();
+    const result = await request.query(`
+      SELECT TOP 5 id, userId, action, timestamp
+      FROM ActivityLog
+      ORDER BY timestamp DESC
+    `);
 
-    const response = {
-      success: true,
-      data: mockActivity.slice(0, 5), // Return last 5 activities
-    };
-
-    res.json(response);
+    res.json({ success: true, data: result.recordset });
   } catch (error) {
     console.error("Activity error:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch activity",
-    });
+    res.status(500).json({ success: false, error: "Failed to fetch activity" });
   }
 };
 
 const handleGetFullActivity = async (req, res) => {
   try {
-    // In production, replace with SQL Server query with pagination
-    // SELECT * FROM ActivityLog ORDER BY timestamp DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+    const request = new sql.Request();
+    const result = await request.query(`
+      SELECT id, userId, action, timestamp
+      FROM ActivityLog
+      ORDER BY timestamp DESC
+    `);
 
-    const response = {
-      success: true,
-      data: mockActivity,
-    };
-
-    res.json(response);
+    res.json({ success: true, data: result.recordset });
   } catch (error) {
     console.error("Full activity error:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch full activity log",
-    });
+    res.status(500).json({ success: false, error: "Failed to fetch full activity log" });
   }
 };
 

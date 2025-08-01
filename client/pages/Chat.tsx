@@ -34,83 +34,6 @@ export default function Chat() {
   const [searchUsers, setSearchUsers] = useState("");
   const messagesEndRef = useRef(null);
 
-  // Mock data for group chat
-  const mockMessages = [
-    {
-      id: "1",
-      userId: "1",
-      userName: "Admin User",
-      message: "Welcome to the team chat! 👋",
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      type: "text",
-    },
-    {
-      id: "2",
-      userId: "2",
-      userName: "Regular User",
-      message: "Thanks! Excited to be working with everyone.",
-      timestamp: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
-      type: "text",
-    },
-    {
-      id: "3",
-      userId: "3",
-      userName: "Jane Smith",
-      message: "Has anyone seen the latest project updates?",
-      timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      type: "text",
-    },
-    {
-      id: "4",
-      userId: "1",
-      userName: "Admin User",
-      message:
-        "Yes, I just posted them in the Projects section. Check them out!",
-      timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-      type: "text",
-    },
-  ];
-
-  const mockOnlineUsers = [
-    { id: "1", name: "Admin User", role: "manager", status: "online" },
-    { id: "2", name: "Regular User", role: "member", status: "online" },
-    { id: "3", name: "Jane Smith", role: "member", status: "away" },
-    { id: "4", name: "Bob Wilson", role: "member", status: "offline" },
-    { id: "5", name: "Sarah Johnson", role: "member", status: "online" },
-  ];
-
-  // Mock private chat data
-  const mockPrivateChats = {
-    "2": [
-      {
-        id: "p1",
-        userId: "2",
-        userName: "Regular User",
-        message: "Hi! Can you help me with the website project?",
-        timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-        type: "text",
-      },
-      {
-        id: "p2",
-        userId: user?.id,
-        userName: `${user?.firstName} ${user?.lastName}`,
-        message: "Sure! What do you need help with?",
-        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        type: "text",
-      },
-    ],
-    "3": [
-      {
-        id: "p3",
-        userId: "3",
-        userName: "Jane Smith",
-        message: "Are you free to review the design?",
-        timestamp: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-        type: "text",
-      },
-    ],
-  };
-
   useEffect(() => {
     if (isAuthenticated) {
       fetchMessages();
@@ -118,6 +41,13 @@ export default function Chat() {
       fetchPrivateChats();
     }
   }, [isAuthenticated]);
+  useEffect(() => {
+  if (isAuthenticated && user && onlineUsers.length > 0) {
+    fetchPrivateChats();
+  }
+  
+}, [isAuthenticated, user, onlineUsers]);
+
 
   const fetchMessages = async () => {
     try {
@@ -136,7 +66,6 @@ export default function Chat() {
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
-      setMessages(mockMessages);
     }
   };
 
@@ -167,9 +96,33 @@ export default function Chat() {
   };
 
   const fetchPrivateChats = async () => {
-    // For now, use mock data - would need to fetch from multiple endpoints
-    setPrivateChats(mockPrivateChats);
-  };
+  const token = localStorage.getItem('auth_token');
+
+  const allChats = {};
+  const userIds = onlineUsers.map(u => u.id).filter(id => id !== user.id);
+
+  for (const otherUserId of userIds) {
+    try {
+      const response = await fetch(`/api/chat/private/${otherUserId}?currentUserId=${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          allChats[otherUserId] = data.data;
+        }
+      }
+    } catch (error) {
+      console.error(`Error fetching chat with ${otherUserId}:`, error);
+    }
+  }
+
+  setPrivateChats(allChats);
+};
+
 
   useEffect(() => {
     scrollToBottom();
@@ -245,6 +198,19 @@ export default function Chat() {
           }
         }
       }
+      socketRef.current?.emit('private_message', {
+  to: activeChat,
+  message: {
+    id: Date.now().toString(),
+    senderId: user.id,
+    senderName: `${user.firstName} ${user.lastName}`,
+    message: newMessage,
+    timestamp: new Date().toISOString(),
+    type: 'text',
+    isRead: false
+  }
+});
+
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -281,12 +247,14 @@ export default function Chat() {
   };
 
   const getInitials = (name) => {
-    return name
-      .split(" ")
-      .map((n) => n.charAt(0))
-      .join("")
-      .toUpperCase();
-  };
+  if (!name || typeof name !== "string") return "??";
+  return name
+    .split(" ")
+    .map((n) => n.charAt(0))
+    .join("")
+    .toUpperCase();
+};
+
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -300,11 +268,18 @@ export default function Chat() {
   };
 
   const getCurrentMessages = () => {
-    if (activeChat === "group") {
-      return messages;
-    }
-    return privateChats[activeChat] || [];
-  };
+  const rawMessages = activeChat === "group"
+    ? messages
+    : privateChats[activeChat] || [];
+
+  // Normalize userName for both group and private messages
+  return rawMessages.map(msg => ({
+  ...msg,
+  userName: msg.userName || msg.senderName || "Unknown",
+  userId: msg.userId || msg.senderId // 👈 ensure all messages have userId
+}));
+};
+
 
   const getCurrentChatTitle = () => {
     if (activeChat === "group") {
@@ -353,107 +328,64 @@ export default function Chat() {
             </CardContent>
           </Card>
 
-          {/* Private Chats */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Private Messages</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {Object.keys(privateChats).map((userId) => {
-                const chatUser = onlineUsers.find((u) => u.id === userId);
-                if (!chatUser) return null;
+          <Card className="flex flex-col h-[calc(100vh-20rem)]">
+  <CardHeader className="pb-3">
+    <CardTitle className="text-sm">Private Messages</CardTitle>
+  </CardHeader>
+  <CardContent className="space-y-3 flex-1 flex flex-col overflow-hidden">
+    {/* Search Bar */}
+    <div className="relative">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <Input
+        placeholder="Search members..."
+        value={searchUsers}
+        onChange={(e) => setSearchUsers(e.target.value)}
+        className="pl-10"
+      />
+    </div>
 
-                const lastMessage = privateChats[userId]?.slice(-1)[0];
-
-                return (
-                  <Button
-                    key={userId}
-                    variant={activeChat === userId ? "default" : "ghost"}
-                    className="w-full justify-start h-auto p-3"
-                    onClick={() => setActiveChat(userId)}
-                  >
-                    <div className="flex items-center space-x-3 w-full">
-                      <div className="relative">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback>
-                            {getInitials(chatUser.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div
-                          className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${getStatusColor(chatUser.status)}`}
-                        />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="text-sm font-medium truncate">
-                          {chatUser.name}
-                        </p>
-                        {lastMessage && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {lastMessage.message}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </Button>
-                );
-              })}
-            </CardContent>
-          </Card>
-
-          {/* Start New Chat */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Start New Chat</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search members..."
-                  value={searchUsers}
-                  onChange={(e) => setSearchUsers(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <ScrollArea className="h-40">
-                <div className="space-y-1">
-                  {filteredUsers.map((user) => (
-                    <Button
-                      key={user.id}
-                      variant="ghost"
-                      className="w-full justify-start h-auto p-2"
-                      onClick={() => startPrivateChat(user.id)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="relative">
-                          <Avatar className="h-6 w-6">
-                            <AvatarFallback className="text-xs">
-                              {getInitials(user.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div
-                            className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white dark:border-gray-800 ${getStatusColor(user.status)}`}
-                          />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="text-sm">{user.name}</p>
-                          <Badge
-                            variant={
-                              user.role === "manager" ? "default" : "secondary"
-                            }
-                            className="text-xs"
-                          >
-                            {user.role === "manager" ? "Manager" : "Member"}
-                          </Badge>
-                        </div>
-                        <MessageCircle className="h-4 w-4" />
-                      </div>
-                    </Button>
-                  ))}
+    {/* Scrollable User List */}
+    <ScrollArea className="flex-1 overflow-y-auto pr-2">
+      <div className="space-y-1">
+        {filteredUsers.map((user) => {
+          const lastMessage = privateChats[user.id]?.slice(-1)[0];
+          return (
+            <Button
+              key={user.id}
+              variant={activeChat === user.id ? "default" : "ghost"}
+              className="w-full justify-start h-auto p-3"
+              onClick={() => startPrivateChat(user.id)}
+            >
+              <div className="flex items-center space-x-3 w-full">
+                <div className="relative">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="text-xs">
+                      {getInitials(user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div
+                    className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${getStatusColor(user.status)}`}
+                  />
                 </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium truncate">
+                    {user.name}
+                  </p>
+                  {lastMessage && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {lastMessage.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </Button>
+          );
+        })}
+      </div>
+    </ScrollArea>
+  </CardContent>
+</Card>
+
         </div>
 
         {/* Chat Area */}
@@ -490,96 +422,96 @@ export default function Chat() {
               </div>
             </CardHeader>
 
-            <CardContent className="flex-1 flex flex-col p-0">
-              {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
-                  {getCurrentMessages().map((message, index) => {
-                    const isOwnMessage = message.userId === user.id;
-                    const showAvatar =
-                      index === 0 ||
-                      getCurrentMessages()[index - 1].userId !== message.userId;
+            <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+  {/* Scrollable Message List with Max Height */}
+  <div className="flex-1 overflow-y-auto px-4 pt-4 pb-2 space-y-4 max-h-[calc(100vh-16rem)]">
+    {getCurrentMessages().map((message, index) => {
+      const isOwnMessage = message.userId === user.id;
+      const showAvatar =
+        index === 0 ||
+        getCurrentMessages()[index - 1].userId !== message.userId;
 
-                    return (
-                      <div
-                        key={message.id}
-                        className={`flex items-start space-x-3 ${isOwnMessage ? "flex-row-reverse space-x-reverse" : ""}`}
-                      >
-                        {showAvatar && (
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback
-                              className={
-                                isOwnMessage
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-secondary"
-                              }
-                            >
-                              {getInitials(message.userName)}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                        {!showAvatar && <div className="w-8" />}
+      return (
+        <div
+          key={message.id}
+          className={`flex items-start space-x-3 ${
+            isOwnMessage ? "flex-row-reverse space-x-reverse" : ""
+          }`}
+        >
+          {showAvatar ? (
+            <Avatar className="h-8 w-8">
+              <AvatarFallback
+                className={
+                  isOwnMessage
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary"
+                }
+              >
+                {getInitials(message.userName)}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className="w-8" />
+          )}
 
-                        <div
-                          className={`flex-1 max-w-xs ${isOwnMessage ? "text-right" : ""}`}
-                        >
-                          {showAvatar && (
-                            <div
-                              className={`flex items-center space-x-2 mb-1 ${isOwnMessage ? "justify-end" : ""}`}
-                            >
-                              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                {message.userName}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {formatTimeAgo(message.timestamp)}
-                              </span>
-                            </div>
-                          )}
-                          <div
-                            className={`inline-block rounded-lg px-3 py-2 text-sm ${
-                              isOwnMessage
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
-                            }`}
-                          >
-                            {message.message}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <div ref={messagesEndRef} />
-                </div>
-              </ScrollArea>
-
-              {/* Message Input */}
-              <div className="p-4 border-t">
-                <form
-                  onSubmit={handleSendMessage}
-                  className="flex items-center space-x-2"
-                >
-                  <Button variant="outline" size="sm" type="button">
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder={
-                      activeChat === "group"
-                        ? "Type a message to the group..."
-                        : "Type a private message..."
-                    }
-                    className="flex-1"
-                  />
-                  <Button variant="outline" size="sm" type="button">
-                    <Smile className="h-4 w-4" />
-                  </Button>
-                  <Button type="submit" size="sm" disabled={!newMessage.trim()}>
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </form>
+          <div className={`flex-1 max-w-xs ${isOwnMessage ? "text-right" : ""}`}>
+            {showAvatar && (
+              <div
+                className={`flex items-center space-x-2 mb-1 ${
+                  isOwnMessage ? "justify-end" : ""
+                }`}
+              >
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {message.userName}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {formatTimeAgo(message.timestamp)}
+                </span>
               </div>
-            </CardContent>
+            )}
+            <div
+              className={`inline-block rounded-lg px-3 py-2 text-sm ${
+                isOwnMessage
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
+              }`}
+            >
+              {message.message}
+            </div>
+          </div>
+        </div>
+      );
+    })}
+    <div ref={messagesEndRef} />
+  </div>
+
+  {/* Fixed Input Box */}
+  <div className="p-4 border-t shrink-0">
+    <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
+      <Button variant="outline" size="sm" type="button">
+        <Paperclip className="h-4 w-4" />
+      </Button>
+      <Input
+        value={newMessage}
+        onChange={(e) => setNewMessage(e.target.value)}
+        placeholder={
+          activeChat === "group"
+            ? "Type a message to the group..."
+            : "Type a private message..."
+        }
+        className="flex-1"
+      />
+      <Button variant="outline" size="sm" type="button">
+        <Smile className="h-4 w-4" />
+      </Button>
+      <Button type="submit" size="sm" disabled={!newMessage.trim()}>
+        <Send className="h-4 w-4" />
+      </Button>
+    </form>
+  </div>
+</CardContent>
+
+
           </Card>
         </div>
       </div>

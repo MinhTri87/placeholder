@@ -1,51 +1,6 @@
 const { getConnection, sql } = require('../db/connection');
 const { findUserById } = require('./auth');
 
-// In-memory storage for development when database is not connected
-let groupMessages = [
-  {
-    id: '1',
-    userId: '1',
-    userName: 'Admin User',
-    message: 'Welcome to the team chat! 👋',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    type: 'text'
-  },
-  {
-    id: '2',
-    userId: '2',
-    userName: 'Regular User',
-    message: 'Thanks! Excited to be working with everyone.',
-    timestamp: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
-    type: 'text'
-  }
-];
-
-let privateMessages = {
-  "1_2": [
-    {
-      id: 'p1',
-      senderId: '2',
-      receiverId: '1',
-      senderName: 'Regular User',
-      message: 'Hi! Can you help me with the website project?',
-      timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-      type: 'text',
-      isRead: false
-    },
-    {
-      id: 'p2',
-      senderId: '1',
-      receiverId: '2',
-      senderName: 'Admin User',
-      message: 'Sure! What do you need help with?',
-      timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      type: 'text',
-      isRead: true
-    }
-  ]
-};
-
 const getPrivateChatKey = (user1Id, user2Id) => {
   const ids = [user1Id, user2Id].sort();
   return `${ids[0]}_${ids[1]}`;

@@ -127,6 +127,19 @@ const initializeSchema = async () => {
         FOREIGN KEY (ReceiverID) REFERENCES Users(ID)
       )
     `);
+    
+    // Create ActivityLog table
+    await pool.request().query(`
+      IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ActivityLog' AND xtype='U')
+      CREATE TABLE ActivityLog (
+        ID NVARCHAR(50) PRIMARY KEY,
+        UserID NVARCHAR(50) NOT NULL,
+        UserName NVARCHAR(200) NOT NULL,
+        Action NVARCHAR(200) NOT NULL,
+        Timestamp DATETIME2 DEFAULT GETDATE(),
+        FOREIGN KEY (UserID) REFERENCES Users(ID)
+      )
+    `);
 
     console.log('Database schema initialized successfully');
   } catch (error) {
