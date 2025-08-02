@@ -66,37 +66,82 @@ export default function Tasks() {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchTasks();
-      fetchProjects();
-      fetchUsers();
-    }
-  }, [isAuthenticated]);
+  const loadData = async () => {
+    const token = localStorage.getItem('auth_token');
 
-  const fetchTasks = async () => {
-    try {
-      const token = localStorage.getItem("auth_token");
-      const response = await fetch("/api/tasks", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    // Fetch users first
+    const usersRes = await fetch('/api/users', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const usersData = await usersRes.json();
+    const userList = usersData.data || [];
+    setUsers(userList); // Update state
+
+    // Now fetch tasks using the just-fetched userList
+    const tasksRes = await fetch('/api/tasks', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const tasksData = await tasksRes.json();
+
+    if (tasksData.success && tasksData.data) {
+      const enrichedTasks = tasksData.data.map((task) => {
+        const assignee = userList.find((u) => u.id === task.assignedTo);
+        return {
+          ...task,
+          assigneeName: assignee
+            ? `${assignee.firstName} ${assignee.lastName}`
+            : "Unknown",
+        };
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          setTasks(data.data);
-        } else {
-          setTasks([]);
-        }
-      } else {
-        setTasks([]);
-      }
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
+      setTasks(enrichedTasks);
+    } else {
       setTasks([]);
     }
   };
+
+  if (isAuthenticated) {
+    loadData();
+  }
+}, [isAuthenticated]);
+
+
+  const fetchTasks = async () => {
+  try {
+    const token = localStorage.getItem("auth_token");
+    const response = await fetch("/api/tasks", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.data) {
+        const enrichedTasks = data.data.map((task) => {
+          const assignee = users.find((u) => u.id === task.assignedTo);
+          return {
+            ...task,
+            assigneeName: assignee
+              ? `${assignee.firstName} ${assignee.lastName}`
+              : "Unknown",
+          };
+        });
+
+        setTasks(enrichedTasks);
+      } else {
+        setTasks([]);
+      }
+    } else {
+      setTasks([]);
+    }
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    setTasks([]);
+  }
+};
+
+
+
 
   const fetchProjects = async () => {
     try {
@@ -114,19 +159,27 @@ export default function Tasks() {
   };
 
   const fetchUsers = async () => {
-    try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/users', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data.data || []);
-      }
-    } catch (error) {
+  try {
+    const token = localStorage.getItem('auth_token');
+    const response = await fetch('/api/users', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const userList = data.data || [];
+      setUsers(userList); // update state
+      console.log('Fetched users:', userList); // log actual data
+    } else {
       setUsers([]);
+      console.warn("Fetch users failed with status:", response.status);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    setUsers([]);
+  }
+};
+
 
   if (isLoading) {
     return (
@@ -294,9 +347,11 @@ export default function Tasks() {
     pending: tasks.filter((t) => t.status === "pending").length,
     inProgress: tasks.filter((t) => t.status === "in_progress").length,
     completed: tasks.filter((t) => t.status === "completed").length,
+    cancelled: tasks.filter((t) => t.status === "cancelled").length,
   };
 
   const myTasks = tasks.filter((task) => task.assignedTo === user.id);
+
 
   return (
     <Layout>
@@ -513,6 +568,19 @@ export default function Tasks() {
               </div>
             </CardContent>
           </Card>
+          <Card>
+            <CardContent className="flex items-center p-6">
+              <AlertCircle className="h-8 w-8 text-red-600 mr-4" />
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Cancelled
+                </p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {taskStats.cancelled}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <Tabs defaultValue="all" className="space-y-4">
@@ -535,6 +603,7 @@ export default function Tasks() {
                       className="pl-10"
                     />
                   </div>
+                  
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-[120px]">
                       <SelectValue />
@@ -542,8 +611,9 @@ export default function Tasks() {
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="in-progress">In Progress</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                   <Select
@@ -639,24 +709,23 @@ export default function Tasks() {
                         </div>
                         {(isManager || task.assignedTo === user.id) && (
                           <Select
-                            value={task.status}
-                            onValueChange={(value) =>
-                              handleStatusChange(task.id, value)
-                            }
-                          >
-                            <SelectTrigger className="w-[120px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="in_progress">
-                                In Progress
-                              </SelectItem>
-                              <SelectItem value="completed">
-                                Completed
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
+  value={task.status}
+  onValueChange={(value) =>
+    handleStatusChange(task.id, value)
+  }
+  disabled={!isManager}
+>
+  <SelectTrigger className="w-[120px]">
+    <SelectValue />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="pending">Pending</SelectItem>
+    <SelectItem value="in-progress">In Progress</SelectItem>
+    <SelectItem value="completed">Completed</SelectItem>
+    <SelectItem value="cancelled">Cancelled</SelectItem>
+  </SelectContent>
+</Select>
+
                         )}
                       </div>
                     </div>
@@ -701,23 +770,26 @@ export default function Tasks() {
                           </span>
                         </div>
                       </div>
-                      <Select
-                        value={task.status}
-                        onValueChange={(value) =>
-                          handleStatusChange(task.id, value)
-                        }
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="in_progress">
-                            In Progress
-                          </SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {(isManager || task.assignedTo === user.id) && (
+                          <Select
+  value={task.status}
+  onValueChange={(value) =>
+    handleStatusChange(task.id, value)
+  }
+  disabled={!isManager}
+>
+  <SelectTrigger className="w-[120px]">
+    <SelectValue />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="pending">Pending</SelectItem>
+    <SelectItem value="in-progress">In Progress</SelectItem>
+    <SelectItem value="completed">Completed</SelectItem>
+    <SelectItem value="cancelled">Cancelled</SelectItem>
+  </SelectContent>
+</Select>
+
+                        )}
                     </div>
                   </CardContent>
                 </Card>

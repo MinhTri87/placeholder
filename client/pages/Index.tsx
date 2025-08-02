@@ -36,35 +36,47 @@ export default function Index() {
   }, [isAuthenticated]);
 
   const fetchDashboardData = async () => {
-    try {
-      const token = localStorage.getItem("auth_token");
-      const headers = {
-        Authorization: `Bearer ${token}`,
-      };
+  await Promise.all([fetchStats(), fetchRecentActivity()]);
+  setLoadingStats(false);
+};
 
-      // Fetch stats
-      const statsResponse = await fetch("/api/stats", { headers });
-      if (statsResponse.ok) {
-        const statsData: ApiResponse<GroupStats> = await statsResponse.json();
-        if (statsData.success && statsData.data) {
-          setStats(statsData.data);
-        }
-      }
-
-      // Fetch recent activity
-      const activityResponse = await fetch("/api/activity/recent", { headers });
-      if (activityResponse.ok) {
-        const activityData: ApiResponse<ActivityLog[]> =
-          await activityResponse.json();
-        if (activityData.success && activityData.data) {
-          setRecentActivity(activityData.data);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+const fetchStats = async () => {
+  try {
+    const token = localStorage.getItem("auth_token");
+    const headers = { Authorization: `Bearer ${token}` };
+    const res = await fetch("/api/stats", { headers });
+    if (res.ok) {
+      const data: ApiResponse<GroupStats> = await res.json();
+      if (data.success && data.data) setStats(data.data);
     }
-    setLoadingStats(false);
-  };
+  } catch (err) {
+    console.error("Failed to fetch stats:", err);
+  }
+};
+
+const fetchRecentActivity = async () => {
+  try {
+    const token = localStorage.getItem("auth_token");
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const response = await fetch("/api/activity/recent", {
+      headers,
+    });
+
+    if (response.ok) {
+      const data: ApiResponse<ActivityLog[]> = await response.json();
+      if (data.success && data.data) {
+        setRecentActivity(data.data);
+      }
+    } else {
+      console.error("Failed to fetch recent activity");
+    }
+  } catch (error) {
+    console.error("Error fetching recent activity:", error);
+  }
+};
+
+
 
   if (isLoading) {
     return (
