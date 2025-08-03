@@ -35,7 +35,9 @@ import {
   ChevronLeft,
   ChevronRight,
   BarChart3,
+  HardDrive
 } from "lucide-react";
+// Added icon import
 
 interface LayoutProps {
   children: ReactNode;
@@ -77,6 +79,24 @@ export function Layout({ children }: LayoutProps) {
       href: "/tasks",
       icon: CheckSquare,
       description: "Task assignments",
+    },
+    {
+      name: "My Space",
+      href: "/myspace",
+      icon: Users,
+      description: "Personal workspace",
+    },
+    {
+      name: "Personal Vault",
+      href: "/Vault",
+      icon: Shield,
+      description: "Secure personal storage",
+    },
+    {
+      name: "File Manager",
+      href: "/files",
+      icon: FolderOpen,
+      description: "Manage your files",
     },
     ...(isManager
       ? [

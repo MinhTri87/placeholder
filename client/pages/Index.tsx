@@ -19,6 +19,9 @@ import {
   Calendar,
   Clock,
   UserPlus,
+  BookOpen,
+  MessageSquare,
+  FolderOpen,
 } from "lucide-react";
 import { GroupStats, ActivityLog, ApiResponse } from "@shared/api";
 import { Navigate, Link } from "react-router-dom";
@@ -260,7 +263,7 @@ console.log(formatTimeAgo("activity.timestamp")); // test it
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {activity.userName}
+                      {activity.username}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {activity.action}
@@ -319,6 +322,16 @@ console.log(formatTimeAgo("activity.timestamp")); // test it
                   </Button>
                 </>
               )}
+              <Button
+                asChild
+                variant="outline"
+                className="w-full justify-start"
+              >
+                <Link to="/myspace">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  My Space
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </div>

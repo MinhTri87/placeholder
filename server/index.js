@@ -1,4 +1,5 @@
 require("dotenv/config");
+const fileRoutes = require("./routes/files");
 const express = require("express");
 const cors = require("cors");
 const { handleDemo } = require("./routes/demo");
@@ -122,6 +123,9 @@ function createServer() {
   app.post("/api/chat/private/:userId", handleSendPrivateMessage);
   app.get("/api/chat/users", handleGetUserList);
   app.get("/api/chat/unread", handleGetUnreadCount);
+
+  //file upload routes
+  app.use("/api/files", fileRoutes);
   return app;
 }
 

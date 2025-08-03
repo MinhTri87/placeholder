@@ -4,15 +4,14 @@ const { getConnection, sql } = require("../db/connection");
 
 // JWT Configuration - MUST be set in environment variables for security
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "24h";
 
 // Validate JWT_SECRET is configured
 if (!JWT_SECRET) {
   console.error(
-    "❌ SECURITY ERROR: JWT_SECRET environment variable is not set!",
+    "❌ SECURITY ERROR: JWT_SECRET environment variable is not set!", process.env.JWT_SECRET ? "" : " (empty)",
   );
   console.error(
-    "📋 Generate a secure secret using: node scripts/generate-jwt-secret.js",
+    "📋 Generate a secure secret using: node scripts/generate-jwt-secret.js"
   );
   console.error("🔧 Set JWT_SECRET in your .env file or environment variables");
   process.exit(1);
@@ -58,7 +57,6 @@ const generateToken = (user) => {
       role: user.role,
     },
     JWT_SECRET,
-    { expiresIn: JWT_EXPIRES_IN },
   );
 };
 
@@ -202,6 +200,8 @@ const handleLogin = async (req, res) => {
       isActive: user.isActive ?? user.IsActive,
       createdAt: user.createdAt || user.CreatedAt,
       lastLogin: new Date().toISOString(),
+      bio: user.bio || user.Bio,
+      favoriteQuote: user.favoriteQuote || user.FavoriteQuote,
     };
 
     res.json({
@@ -343,6 +343,8 @@ const handleAuthCheck = async (req, res) => {
       isActive: user.isActive ?? user.IsActive,
       createdAt: user.createdAt || user.CreatedAt,
       lastLogin: user.lastLogin || user.LastLogin,
+      bio: user.bio || user.Bio,
+      favoriteQuote: user.favoriteQuote || user.FavoriteQuote,
     };
 
     res.json({

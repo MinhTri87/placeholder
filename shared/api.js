@@ -126,6 +126,18 @@
  * @property {'text' | 'system'} type
  */
 
+/**
+ * File upload types
+ * @typedef {Object} FileUpload
+ * @property {string} id
+ * @property {string} name
+ * @property {string} path
+ * @property {string} size
+ * @property {string} type
+ * @property {string} uploadedBy
+ * @property {string} uploadedAt
+ */
+
 // Export for CommonJS compatibility
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {};

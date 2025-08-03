@@ -141,6 +141,89 @@ const initializeSchema = async () => {
       )
     `);
 
+    // Create PersonalVault table for personal data storage
+    await pool.request().query(`
+      IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='PersonalVault' AND xtype='U')
+      CREATE TABLE PersonalVault (
+        ID int IDENTITY(1,1) PRIMARY KEY,
+        UserID NVARCHAR(50) NOT NULL,
+        Title NVARCHAR(255) NOT NULL,
+        Content NTEXT,
+        Type NVARCHAR(20) CHECK (Type IN ('note', 'bookmark', 'idea', 'document', 'contact', 'memory', 'goal', 'quote')) NOT NULL,
+        Category NVARCHAR(100) DEFAULT 'Uncategorized',
+        Tags NVARCHAR(500),
+        IsPrivate BIT DEFAULT 1,
+        IsFavorite BIT DEFAULT 0,
+        CreatedAt DATETIME2 DEFAULT GETDATE(),
+        UpdatedAt DATETIME2 DEFAULT GETDATE(),
+        MetadataURL NVARCHAR(500),
+        MetadataAuthor NVARCHAR(255),
+        MetadataDate NVARCHAR(50),
+        MetadataLocation NVARCHAR(255),
+        MetadataMood NVARCHAR(50),
+        MetadataPriority NVARCHAR(20) CHECK (MetadataPriority IN ('low', 'medium', 'high')),
+        FOREIGN KEY (UserID) REFERENCES Users(ID)
+      )
+    `);
+    
+    // Create FileMetadata table for file management
+    await pool.request().query(`
+      IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='FileMetadata' AND xtype='U')
+      CREATE TABLE FileMetadata (
+        ID INT IDENTITY(1,1) PRIMARY KEY,
+        Name NVARCHAR(255) NOT NULL,
+        VirtualPath NVARCHAR(1000) NOT NULL,
+        PhysicalPath NVARCHAR(1000) NOT NULL,
+        Type NVARCHAR(10) CHECK (Type IN ('file', 'folder')) NOT NULL,
+        Size NVARCHAR(50) NOT NULL,
+        MimeType NVARCHAR(255),
+        Extension NVARCHAR(50),
+        Description NVARCHAR(1000),
+        Tags NVARCHAR(500),
+        IsShared BIT DEFAULT 0,
+        IsStarred BIT DEFAULT 0,
+        CreatedBy NVARCHAR(50) NOT NULL,
+        ModifiedBy NVARCHAR(50) NOT NULL,
+        CreatedAt DATETIME2 DEFAULT GETDATE(),
+        ModifiedAt DATETIME2 DEFAULT GETDATE(),
+        Version INT DEFAULT 1,
+        Checksum NVARCHAR(64),
+        Permissions NVARCHAR(500),
+        FOREIGN KEY (CreatedBy) REFERENCES Users(ID),
+        FOREIGN KEY (ModifiedBy) REFERENCES Users(ID)
+      )
+    `);
+
+    // Create FileShares table for file sharing
+    await pool.request().query(`
+      IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='FileShares' AND xtype='U')
+      CREATE TABLE FileShares (
+        ID INT IDENTITY(1,1) PRIMARY KEY,
+        FileID int NOT NULL,
+        UserID NVARCHAR(50),
+        GroupName NVARCHAR(100),
+        Permission NVARCHAR(20) CHECK (Permission IN ('read', 'write', 'admin')) NOT NULL,
+        IsPublic BIT DEFAULT 0,
+        ExpiresAt DATETIME2,
+        CreatedAt DATETIME2 DEFAULT GETDATE(),
+        CreatedBy NVARCHAR(50) NOT NULL,
+        FOREIGN KEY (FileID) REFERENCES FileMetadata(ID) ON DELETE CASCADE,
+        FOREIGN KEY (UserID) REFERENCES Users(ID),
+        FOREIGN KEY (CreatedBy) REFERENCES Users(ID)
+      );
+    `);
+
+    // Add Bio and FavoriteQuote columns to Users table for MySpace feature
+    await pool.request().query(`
+      IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Users' AND COLUMN_NAME = 'Bio')
+      ALTER TABLE Users ADD Bio NVARCHAR(500)
+    `);
+
+    await pool.request().query(`
+      IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Users' AND COLUMN_NAME = 'FavoriteQuote')
+      ALTER TABLE Users ADD FavoriteQuote NVARCHAR(500)
+    `);
+
     console.log('Database schema initialized successfully');
   } catch (error) {
     console.error('Schema initialization failed:', error.message);

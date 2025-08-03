@@ -38,7 +38,7 @@ const handleGetRecentActivity = async (req, res) => {
   try {
     const request = new sql.Request();
     const result = await request.query(`
-      SELECT TOP 5 id, userId, action, timestamp
+      SELECT TOP 5 id, username, action, timestamp
       FROM ActivityLog
       ORDER BY timestamp DESC
     `);
@@ -54,7 +54,7 @@ const handleGetFullActivity = async (req, res) => {
   try {
     const request = new sql.Request();
     const result = await request.query(`
-      SELECT id, userId, action, timestamp
+      SELECT id, username, action, timestamp
       FROM ActivityLog
       ORDER BY timestamp DESC
     `);

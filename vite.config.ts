@@ -7,7 +7,8 @@ import { createServer } from "./server";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "0.0.0.0", // Bind to all interfaces for local network access
-    port: 80,
+    //use a specific host name as web.example.com
+    port: 8080,
 
     fs: {
       allow: ["./client", "./shared"],

@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const sql = require('mssql');
-import { handleActivityCommit } from './activity';
+const { handleActivityCommit } = require('./activity'); // Adjust the path as necessary
 
 // Get all tasks
 const handleGetTasks = async (req, res) => {
@@ -82,7 +82,7 @@ const handleCreateTask = async (req, res) => {
       FROM Tasks
       WHERE ID = @ID
     `);
-    handleActivityCommit(currentUserId, `create task ${title}`);
+    handleActivityCommit(decoded, `created task ${title}`);
     res.json({
       success: true,
       data: fetchResult.recordset[0]
@@ -174,7 +174,7 @@ const handleUpdateTask = async (req, res) => {
       FROM Tasks
       WHERE ID = @ID
     `);
-    handleActivityCommit(currentUserId, `update task ${updates.title}`);
+    handleActivityCommit(decoded, `updated task ${updates.title}`);
 
     res.json({
       success: true,

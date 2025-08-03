@@ -69,6 +69,18 @@ export default function Chat() {
     }
   };
 
+  //simulate real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isAuthenticated) {
+        fetchMessages();
+        fetchUsers();
+        fetchPrivateChats();
+      }
+    }, 5000); // Fetch every 5 seconds
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('auth_token');

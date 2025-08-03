@@ -1,0 +1,20 @@
+{
+  "id": "RDpcYnVpbGRlci5pb3dlYlx1cGxvYWRzXHBhY2sucG5n",
+  "name": "pack.png",
+  "type": "file",
+  "size": 65304,
+  "path": "/pack.png",
+  "parentPath": "/",
+  "extension": ".png",
+  "mimeType": "image/png",
+  "createdAt": "2025-08-02T20:32:11.761Z",
+  "modifiedAt": "2025-08-02T20:32:11.761Z",
+  "permissions": [
+    "read",
+    "write"
+  ],
+  "isShared": false,
+  "isStarred": false,
+  "tags": [],
+  "version": 1
+}

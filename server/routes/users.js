@@ -1,6 +1,6 @@
-import{handleActivityCommit}from'./activity'; // Import the activity logging function
 
 const sql = require('mssql'); // Make sure you have mssql installed and configured
+const { handleActivityCommit } = require('./activity'); // Adjust the path as necessary // Import the activity logging function
 const jwt=require('jsonwebtoken');
 const { handleAuthCheck } = require('./auth');
 // Helper function to verify token (same as in auth.js)
@@ -32,7 +32,9 @@ const handleGetUsers = async (req, res) => {
         role, 
         isActive, 
         createdAt, 
-        lastLogin
+        lastLogin,
+        bio,
+        favoritequote
       FROM Users
     `);
 
@@ -99,7 +101,7 @@ const handleCreateUser = async (req, res) => {
       data: newUser,
       message: "User created successfully",
     });
-    handleActivityCommit(currentUserId, "create_user");
+    handleActivityCommit(decoded, "created user"+ ` ${username}`);
     console.log(result);
   } catch (error) {
     console.error("Create user error:", error);
@@ -120,8 +122,8 @@ const handleUpdateUser = async (req, res) => {
     console.log("decoded token:", decoded);
     
     //parsing data
-    const { id } = req.params;
-    const { firstName, lastName, email, role, isActive, username } = req.body;
+    const { id } = req.params || currentUserId;
+    const { firstName, lastName, email, role, isActive, username, bio, favoriteQuote } = req.body;
 
     // Update user
     const request= new sql.Request();
@@ -132,6 +134,8 @@ const handleUpdateUser = async (req, res) => {
       request.input("email", sql.NVarChar, email)
       request.input("role", sql.VarChar, role)
       request.input("isActive", sql.Bit, isActive)
+      request.input("bio", sql.NVarChar, bio)
+      request.input("favoriteQuote", sql.NVarChar, favoriteQuote);
       const result=await request.query(`
         UPDATE users
         SET firstName = @firstName,
@@ -139,7 +143,9 @@ const handleUpdateUser = async (req, res) => {
             lastName = @lastName,
             email = @email,
             role = @role,
-            isActive = @isActive
+            isActive = @isActive,
+            bio = @bio,
+            favoriteQuote = @favoriteQuote
         WHERE id = @id
       `);
 
@@ -147,7 +153,7 @@ const handleUpdateUser = async (req, res) => {
       success: true,
       message: "User updated successfully",
     });
-    handleActivityCommit(currentUserId, `update user ${username}`);
+    handleActivityCommit(decoded, `updated user ${username}`);
     console.log("User updated successfully:", id);
   } catch (error) {
     console.error("Update user error:", error);
@@ -169,6 +175,7 @@ const handleDeleteUser = async (req, res) => {
     console.log("decoded token:", decoded);
 
     const { id } = req.params;
+    const {username} = req.body;
 
     const deleteRequest=new sql.Request();
     deleteRequest.input("id", sql.VarChar, id)
@@ -181,7 +188,7 @@ const handleDeleteUser = async (req, res) => {
       success: true,
       message: "User deleted successfully",
     });
-    handleActivityCommit(currentUserId, `delete user ${id}`);
+    handleActivityCommit(decoded, `deleted user ${username}`);
   } catch (error) {
     console.error("Delete user error:", error);
     res.status(500).json({

@@ -80,7 +80,7 @@ const handleCreateProject = async (req, res) => {
       success: true,
       data: newProject
     });
-    handleActivityCommit(currentUserId, `create project ${name}`);
+    handleActivityCommit(decoded, `created project ${name}`);
   } catch (error) {
     console.error('Create project error:', error);
     res.status(500).json({
@@ -117,7 +117,7 @@ const handleUpdateProject = async (req, res) => {
       success: true,
       data: { id, ...updates }
     };
-    handleActivityCommit(currentUserId, `update project ${updates.name}`);
+    handleActivityCommit(decoded, `updated project ${updates.name}`);
 
     res.json(response);
   } catch (error) {

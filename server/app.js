@@ -1,8 +1,13 @@
 const express = require('express');
 const cors = require('cors');
+// Added imports
+const fileRoutes = require("./routes/files");
+
+// Added route registration
 
 const app = express();
 
+app.use("/api/files", fileRoutes);
 // Middleware
 app.use(cors());
 app.use(express.json());

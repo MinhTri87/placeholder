@@ -135,6 +135,7 @@ console.log("Raw /api/users response:", data);
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
       u.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.username.toLowerCase().includes(searchTerm.toLowerCase());
@@ -275,6 +276,10 @@ console.log("Raw /api/users response:", data);
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
+        body: JSON.stringify({
+          username: users.find((u) => u.id === userId).username
+        }),
+
       });
       const data = await response.json();
       if (data.success) {

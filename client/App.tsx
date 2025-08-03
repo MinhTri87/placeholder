@@ -16,6 +16,9 @@ import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
 import AddMember from "./pages/AddMember";
 import Activity from "./pages/Activity";
+import MySpace from "./pages/MySpace";
+import PersonalVault from "./pages/PersonalVault";
+import FileManager from "./pages/FileManager";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +39,9 @@ export const App = () => (
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/user-management" element={<AddMember />} />
             <Route path="/analytics" element={<Activity />} />
+            <Route path="/myspace" element={<MySpace />} />
+            <Route path="/vault" element={<PersonalVault />} />
+            <Route path="/files" element={<FileManager />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

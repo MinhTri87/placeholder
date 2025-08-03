@@ -1,15 +1,16 @@
 const jwt = require('jsonwebtoken');
 const sql=require('mssql');
 
-const handleActivityCommit = async (userId, action) => {
+const handleActivityCommit = async (user, action) => {
   try {
     const request = new sql.Request();
-    request.input("userId", sql.VarChar, userId);
+    request.input("userId", sql.VarChar, user.userId);
     request.input("action", sql.NVarChar, action);
+    request.input("username", sql.NVarChar, user.username);
 
     await request.query(`
-      INSERT INTO ActivityLog (userId, action)
-      VALUES (@userId, @action)
+      INSERT INTO ActivityLog (userId, action, username)
+      VALUES (@userId, @action, @username)
     `);
     console.log("Activity logged:", action);
   } catch (error) {
